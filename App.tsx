@@ -47,7 +47,6 @@ const workouts = [
       {
         id: 2,
         name: "Neutral Pull Up",
-        note: "10-12 reps",
         sets: 4,
         reps: {
           min: 10,
@@ -57,11 +56,19 @@ const workouts = [
       {
         id: 3,
         name: "BB Curl",
-        note: "12-15 reps",
         sets: 3,
         reps: {
           min: 12,
           max: 15,
+        },
+      },
+      {
+        id: 4,
+        name: "Dips",
+        sets: 3,
+        reps: {
+          min: 10,
+          max: 12,
         },
       },
     ],

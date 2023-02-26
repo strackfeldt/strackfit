@@ -15,12 +15,10 @@
       "fallbackToCacheTimeout": 0,
       "url": "https://u.expo.dev/b009ae2f-ffbd-4d3f-b28a-324441279226"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.strackfeldt.myexpoapp"
+      "bundleIdentifier": "com.timostrackfeldt.strackfit"
     },
     "android": {
       "adaptiveIcon": {
@@ -37,7 +35,7 @@
       }
     },
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "sdkVersion"
     }
   }
 }
