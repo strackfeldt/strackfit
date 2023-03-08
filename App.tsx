@@ -103,10 +103,10 @@ function useCurrentWorkout() {
 function useStartWorkout() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (template: Template) => {
+    mutationFn: (template: { id: string; name: string }) => {
       return pb.collection("workouts").create({
-        template_id: template.id,
         name: template.name,
+        template_id: template.id,
         started_at: new Date(),
       });
     },
@@ -291,7 +291,10 @@ function HomeScreen() {
                 {
                   text: "Start",
                   onPress: () => {
-                    mutate(workout);
+                    mutate({
+                      id: workout.id,
+                      name: workout.name,
+                    });
                   },
                 },
               ]
@@ -369,8 +372,6 @@ function WorkoutCalendar({ workouts }: { workouts: any[] }) {
             return isSameDay(workoutDate, date);
           });
 
-          console.log(`${date.getMonth()} ${day}`);
-
           return (
             <View
               key={`${date.getMonth()} ${day}`}
@@ -396,7 +397,6 @@ function WorkoutCalendar({ workouts }: { workouts: any[] }) {
 
 function HistoryScreen() {
   const { data } = useWorkouts();
-  console.log(data);
 
   const workoutLength = (workout: any) => {
     const start = new Date(workout.started_at);
@@ -510,8 +510,6 @@ function Exercise({
 }) {
   const { data: logs = [] } = useLogs(currentWorkoutId, exercise.id);
   const { mutate } = useCreateLog();
-
-  console.log({ exercise, logs });
 
   const allDone = logs.length >= exercise.sets;
 
@@ -755,7 +753,7 @@ function WorkoutInfo({ workout }: { workout: any }) {
   const minutesSinceStart = Math.floor((timeInSeconds % 3600) / 60);
   const secondsSinceStart = Math.floor(timeInSeconds % 60);
 
-  const timers = [180, 120, 90, 60];
+  const timers = [60, 90, 120, 180];
 
   function formatMinutes(seconds: number) {
     const minutes = Math.floor(seconds / 60);
@@ -775,10 +773,11 @@ function WorkoutInfo({ workout }: { workout: any }) {
         {secondsSinceStart < 10 ? `0${secondsSinceStart}` : secondsSinceStart}
       </Text>
 
-      <View className="flex-row items-center justify-between gap-4 mt-4">
+      <View className="flex-row items-center justify-between gap-4 mt-2">
         {timers.map((timer) => (
           <TouchableOpacity
-            className="p-2 bg-gray-100 flex-1 rounded flex-row items-center justify-center gap-1 mt-4"
+            key={timer}
+            className="p-2 bg-gray-100 flex-1 rounded flex-row items-center justify-center gap-1"
             onPress={() => {
               useTimer.getState().start(timer);
             }}
@@ -808,7 +807,6 @@ function Timer() {
     }, 1000);
 
     return () => {
-      console.log("clearing interval");
       setTimeInSeconds(0);
       clearInterval(interval);
     };
@@ -881,11 +879,11 @@ function WorkoutScreen() {
   useKeepAwake();
 
   const { data: currentWorkout, isLoading } = useCurrentWorkout();
-  const { data: exercises } = useExercises();
+  const { data: exercises , isLoading: exLoading} = useExercises();
 
   const template = workouts.find((w) => w.id === currentWorkout?.template_id);
 
-  if (isLoading || !currentWorkout || !template) {
+  if (isLoading || exLoading || !currentWorkout || !template) {
     return null;
   }
 
@@ -945,8 +943,6 @@ function WorkoutScreen() {
 
 function Router() {
   const { data: currentWorkout, isLoading } = useCurrentWorkout();
-
-  console.log({ currentWorkout: !!currentWorkout });
 
   if (isLoading) return null;
 
@@ -1050,8 +1046,6 @@ function AuthScreen() {
 
 function onAppStateChange(status: AppStateStatus) {
   if (Platform.OS !== "web") {
-    console.log(" focus ");
-
     focusManager.setFocused(status === "active");
   }
 }
