@@ -16,11 +16,13 @@ import {
 import de from "date-fns/locale/de";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
+import Svg, { Circle, Rect } from "react-native-svg";
 import {
   Alert,
   AppState,
   AppStateStatus,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -29,7 +31,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-
 import {
   focusManager,
   QueryClient,
@@ -39,235 +40,235 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useKeepAwake } from "expo-keep-awake";
-import * as SecureStore from "expo-secure-store";
-import PocketBase, { Admin, BaseAuthStore, Record } from "pocketbase";
-
-class AsyncAuthStore extends BaseAuthStore {
-  storageKey: string;
-  queue: Array<() => Promise<any>>;
-
-  /**
-   * @param {String} storageKey
-   */
-  constructor(storageKey = "pb_auth") {
-    super();
-
-    this.storageKey = storageKey;
-    this.queue = [];
-
-    this._enqueue(async () => {
-      const raw = await SecureStore.getItemAsync(this.storageKey);
-      if (raw) {
-        const decoded = JSON.parse(raw);
-        this.save(decoded.token, decoded.model);
-      }
-    });
-  }
-
-  /**
-   * @inheritdoc
-   */
-  save(token: string, model: any) {
-    super.save(token, model);
-
-    this._enqueue(() => {
-      return SecureStore.setItemAsync(
-        this.storageKey,
-        JSON.stringify({ token, model })
-      );
-    });
-  }
-
-  /**
-   * @inheritdoc
-   */
-  clear() {
-    super.clear();
-
-    this._enqueue(() => {
-      return SecureStore.deleteItemAsync(this.storageKey);
-    });
-  }
-
-  /**
-   * Appends an async function to the queue.
-   */
-  _enqueue(asyncCallback: () => Promise<any>) {
-    this.queue.push(asyncCallback);
-
-    if (this.queue.length === 1) {
-      this._dequeue();
-    }
-  }
-
-  /**
-   * Starts the queue processing.
-   */
-  _dequeue() {
-    if (!this.queue.length) {
-      return;
-    }
-
-    this.queue[0]().finally(() => {
-      this.queue.shift();
-
-      if (!this.queue.length) {
-        return;
-      }
-
-      this._dequeue();
-    });
-  }
-}
+import PocketBase, { Admin, Record } from "pocketbase";
+import { AsyncAuthStore } from "./async-auth-store";
+import { Template, workouts } from "./data";
+import { create } from "zustand";
 
 const pb = new PocketBase("https://strackfit.fly.dev/", new AsyncAuthStore());
 
-type Template = {
-  id: number;
-  name: string;
-  exercises: Array<{
-    id: number;
-    name: string;
-    note?: string;
-    sets: number;
-    rest: number;
-    reps: {
-      min: number;
-      max: number;
-    };
-  }>;
-};
+function useCurrentUser() {
+  const [user, setUser] = useState<Record | Admin | null>(pb.authStore.model);
 
-type Workout = {
-  id: number;
-  templateId: number;
-  startDate: Date;
-  endDate?: Date;
-};
+  useEffect(() => {
+    pb.authStore.onChange(() => {
+      setUser(pb.authStore.model);
+    });
+  }, []);
 
-type Log = {
-  workoutId: number;
-  exerciseId: number;
-  setNumber: number;
-  reps: number;
-  weight: number;
-  rpe: number;
-  date: Date;
-};
+  return user;
+}
 
-const workouts: Template[] = [
-  {
-    id: 1,
-    name: "Legs 1",
-    exercises: [],
-  },
-  {
-    id: 2,
-    name: "Push 1",
-    exercises: [
-      {
-        id: 1,
-        name: "Bench Press",
-        sets: 3,
-        rest: 150,
-        reps: { min: 6, max: 8 },
+function useLogin() {
+  return useMutation({
+    mutationFn: (data: { email: string; password: string }) => {
+      return pb.admins.authWithPassword(
+        data.email.toLocaleLowerCase(),
+        data.password
+      );
+    },
+  });
+}
+
+function useLogout() {
+  return () => pb.authStore.clear();
+}
+
+function useWorkouts() {
+  return useQuery({
+    queryKey: ["workouts"],
+    queryFn: () => pb.collection("workouts").getFullList(),
+  });
+}
+
+function useCurrentWorkout() {
+  const query = useQuery({
+    queryKey: ["currentWorkout"],
+    queryFn: () => {
+      return pb
+        .collection("workouts")
+        .getFirstListItem("ended_at = null")
+        .catch((err) => {
+          if (err.status === 404) {
+            return null;
+          }
+          throw err;
+        });
+    },
+  });
+
+  return query;
+}
+
+function useStartWorkout() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (template: Template) => {
+      return pb.collection("workouts").create({
+        template_id: template.id,
+        name: template.name,
+        started_at: new Date(),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["currentWorkout"]);
+    },
+  });
+}
+
+function useCancelWorkout() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (workoutId: string) => {
+      return pb.collection("workouts").delete(workoutId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["currentWorkout"]);
+    },
+  });
+}
+
+function useFinishWorkout() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (workoutId: string) => {
+      return pb.collection("workouts").update(workoutId, {
+        ended_at: new Date(),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["currentWorkout"]);
+    },
+  });
+}
+
+function useExercises() {
+  return useQuery({
+    queryKey: ["exercises"],
+    queryFn: async () => {
+      return await pb
+        .collection("exercises")
+        .getFullList()
+        .catch((err) => {
+          if (err.code === 404) return [];
+        });
+    },
+  });
+}
+
+function useCreateMissingExercises() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      templateExercises,
+      serverExercises,
+    }: {
+      templateExercises: any[];
+      serverExercises: any[];
+    }) => {
+      return Promise.all(
+        templateExercises.map((exercise) => {
+          const exerciseData = serverExercises.find(
+            (e) => e.name === exercise.name
+          );
+
+          if (!exerciseData) {
+            pb.collection("exercises").create({
+              name: exercise.name,
+            });
+          }
+        })
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["exercises"]);
+    },
+  });
+}
+
+function useLogs(workoutId: string, exerciseId: string) {
+  return useQuery({
+    queryKey: ["wokout", workoutId, "logs", exerciseId],
+    queryFn: () => {
+      return pb.collection("logs").getFullList({
+        filter: `workout = "${workoutId}" && exercise = "${exerciseId}"`,
+        sort: "created",
+      });
+    },
+  });
+}
+
+function useCreateLog() {
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    (data: {
+      workoutId: string;
+      exerciseId: string;
+      weight: number;
+      reps: number;
+      rpe: number;
+    }) => {
+      return pb.collection("logs").create({
+        workout: data.workoutId,
+        exercise: data.exerciseId,
+        weight: data.weight,
+        reps: data.reps,
+        rpe: data.rpe,
+      });
+    },
+    {
+      onMutate: async (data) => {
+        await queryClient.cancelQueries({
+          queryKey: ["wokout", data.workoutId, "logs", data.exerciseId],
+        });
+
+        const previousLogs = queryClient.getQueryData([
+          "wokout",
+          data.workoutId,
+          "logs",
+          data.exerciseId,
+        ]);
+
+        queryClient.setQueryData(
+          ["wokout", data.workoutId, "logs", data.exerciseId],
+          (old: any = []) => {
+            return [
+              ...old,
+              {
+                id: "temp",
+                workout: data.workoutId,
+                exercise: data.exerciseId,
+                weight: data.weight,
+                reps: data.reps,
+                rpe: data.rpe,
+              },
+            ];
+          }
+        );
+
+        return { previousLogs };
       },
-      {
-        id: 2,
-        name: "DB Seated Press",
-        sets: 3,
-        rest: 120,
-        reps: { min: 10, max: 12 },
+      onError: (err, newTodo, context: any) => {
+        queryClient.setQueryData(
+          ["wokout", newTodo.workoutId, "logs", newTodo.exerciseId],
+          context.previousLogs
+        );
       },
-      {
-        id: 3,
-        name: "Dips",
-        sets: 3,
-        rest: 120,
-        reps: { min: 8, max: 12 },
+      onSuccess: (data, vars) => {
+        queryClient.invalidateQueries([
+          "wokout",
+          vars.workoutId,
+          "logs",
+          vars.exerciseId,
+        ]);
       },
-      {
-        id: 4,
-        name: "Peck Deck",
-        sets: 3,
-        rest: 120,
-        reps: { min: 12, max: 15 },
-      },
-      {
-        id: 5,
-        name: "Skullcrusher",
-        sets: 3,
-        rest: 90,
-        reps: { min: 12, max: 15 },
-      },
-      {
-        id: 6,
-        name: "Lateral Raise",
-        sets: 3,
-        rest: 90,
-        reps: { min: 15, max: 15 },
-      },
-    ],
-  },
-  {
-    id: 3,
-    name: "Pull 1",
-    exercises: [
-      {
-        id: 1,
-        name: "Neutral Pull Up",
-        sets: 4,
-        rest: 150,
-        reps: { min: 6, max: 8 },
-      },
-      {
-        id: 2,
-        name: "DB Row",
-        sets: 3,
-        rest: 120,
-        reps: { min: 10, max: 12 },
-      },
-      {
-        id: 3,
-        name: "BB Curl",
-        sets: 3,
-        rest: 120,
-        reps: { min: 8, max: 12 },
-      },
-      {
-        id: 4,
-        name: "Lat Pulldown",
-        sets: 2,
-        rest: 120,
-        reps: { min: 12, max: 15 },
-      },
-      {
-        id: 5,
-        name: "Preacher Curl",
-        sets: 3,
-        rest: 90,
-        reps: { min: 12, max: 15 },
-      },
-      {
-        id: 6,
-        name: "Ring Face Pull",
-        sets: 3,
-        rest: 90,
-        reps: { min: 15, max: 15 },
-      },
-    ],
-  },
-  {
-    id: 4,
-    name: "Push 2",
-    exercises: [],
-  },
-  {
-    id: 5,
-    name: "Pull 2",
-    exercises: [],
-  },
-];
+    }
+  );
+}
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -304,16 +305,11 @@ function HomeScreen() {
   );
 }
 
-function useLogout() {
-  return () => pb.authStore.clear();
-}
-
 function SettingsScreen() {
   const logout = useLogout();
 
   return (
     <View className="flex-1 bg-gray-200 items-center justify-center">
-      {/* <Text className="">Settings Screen</Text> */}
       <TouchableOpacity
         className="p-4 bg-white rounded"
         onPress={() => {
@@ -337,13 +333,6 @@ function SettingsScreen() {
       </TouchableOpacity>
     </View>
   );
-}
-
-function useWorkouts() {
-  return useQuery({
-    queryKey: ["workouts"],
-    queryFn: () => pb.collection("workouts").getFullList(),
-  });
 }
 
 function WorkoutCalendar({ workouts }: { workouts: any[] }) {
@@ -430,7 +419,7 @@ function HistoryScreen() {
       <WorkoutCalendar workouts={data} />
       <ScrollView className="mt-6">
         {data?.map((workout) => (
-          <View key={workout.id} className="p-4 bg-white rounded">
+          <View key={workout.id} className="p-4 bg-white rounded mb-4">
             <Text>{workout.name}</Text>
             <Text>{workoutLength(workout)}</Text>
             <Text>{new Date(workout.created).toLocaleString("de")}</Text>
@@ -456,15 +445,12 @@ function WorkoutStack() {
 
   if (!currentWorkout || isLoading) return null;
 
-  const template = workouts.find((w) => w.id === currentWorkout?.template_id);
-
   return (
     <Stack.Navigator>
       <Stack.Screen
         name={"Workout"}
         component={WorkoutScreen}
         options={{
-          title: template?.name,
           headerLeft: () => (
             <TouchableOpacity
               className="p-4"
@@ -512,87 +498,6 @@ function WorkoutStack() {
         }}
       />
     </Stack.Navigator>
-  );
-}
-
-function useLogs(workoutId: string, exerciseId: string) {
-  return useQuery({
-    queryKey: ["wokout", workoutId, "logs", exerciseId],
-    queryFn: () => {
-      return pb.collection("logs").getFullList({
-        filter: `workout = "${workoutId}" && exercise = "${exerciseId}"`,
-        sort: "created",
-      });
-    },
-  });
-}
-
-function useCreateLog() {
-  const queryClient = useQueryClient();
-
-  return useMutation(
-    (data: {
-      workoutId: string;
-      exerciseId: string;
-      weight: number;
-      reps: number;
-      rpe: number;
-    }) => {
-      return pb.collection("logs").create({
-        workout: data.workoutId,
-        exercise: data.exerciseId,
-        weight: data.weight,
-        reps: data.reps,
-        rpe: data.rpe,
-      });
-    },
-    {
-      onMutate: async (data) => {
-        await queryClient.cancelQueries({
-          queryKey: ["wokout", data.workoutId, "logs", data.exerciseId],
-        });
-
-        const previousLogs = queryClient.getQueryData([
-          "wokout",
-          data.workoutId,
-          "logs",
-          data.exerciseId,
-        ]);
-
-        queryClient.setQueryData(
-          ["wokout", data.workoutId, "logs", data.exerciseId],
-          (old: any = []) => {
-            return [
-              ...old,
-              {
-                id: "temp",
-                workout: data.workoutId,
-                exercise: data.exerciseId,
-                weight: data.weight,
-                reps: data.reps,
-                rpe: data.rpe,
-              },
-            ];
-          }
-        );
-
-        return { previousLogs };
-      },
-      onError: (err, newTodo, context: any) => {
-        queryClient.setQueryData(
-          ["wokout", newTodo.workoutId, "logs", newTodo.exerciseId],
-          context.previousLogs
-        );
-      },
-      onSuccess: (data, vars) => {
-        queryClient.invalidateQueries([
-          "wokout",
-          vars.workoutId,
-          "logs",
-          vars.exerciseId,
-        ]);
-      },
-    }
   );
 }
 
@@ -731,31 +636,28 @@ function Exercise({
               onPress={() => {
                 if (!weight || !reps || !rpe) return;
 
-                // TODO: Add log
+                useTimer.getState().start(exercise.rest);
 
-                mutate({
-                  exerciseId: exercise.id,
-                  workoutId: currentWorkoutId,
-                  weight: Number(weight),
-                  reps: Number(reps),
-                  rpe: Number(rpe),
-                });
+                mutate(
+                  {
+                    exerciseId: exercise.id,
+                    workoutId: currentWorkoutId,
+                    weight: Number(weight),
+                    reps: Number(reps),
+                    rpe: Number(rpe),
+                  },
 
-                // useWorkoutStore.getState().addLog({
-                //   setNumber:
-                //     logs.filter((log) => log.exerciseId === exercise.id)
-                //       .length + 1,
-                //   exerciseId: exercise.id,
-                //   workoutId: useWorkoutStore.getState().workout?.id!,
-                //   weight: Number(weight),
-                //   reps: Number(reps),
-                //   rpe: Number(rpe),
-                //   date: new Date(),
-                // });
-
-                setWeight("");
-                setReps("");
-                setRpe("");
+                  {
+                    onError: () => {
+                      useTimer.getState().stop();
+                    },
+                    onSuccess: () => {
+                      setWeight("");
+                      setReps("");
+                      setRpe("");
+                    },
+                  }
+                );
               }}
             >
               <Feather name="plus" size={20} color="gray" />
@@ -766,51 +668,6 @@ function Exercise({
       )}
     </View>
   );
-}
-
-function useExercises() {
-  return useQuery({
-    queryKey: ["exercises"],
-    queryFn: async () => {
-      return await pb
-        .collection("exercises")
-        .getFullList()
-        .catch((err) => {
-          if (err.code === 404) return [];
-        });
-    },
-  });
-}
-
-function useCreateMissingExercises() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      templateExercises,
-      serverExercises,
-    }: {
-      templateExercises: any[];
-      serverExercises: any[];
-    }) => {
-      return Promise.all(
-        templateExercises.map((exercise) => {
-          const exerciseData = serverExercises.find(
-            (e) => e.name === exercise.name
-          );
-
-          if (!exerciseData) {
-            pb.collection("exercises").create({
-              name: exercise.name,
-            });
-          }
-        })
-      );
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["exercises"]);
-    },
-  });
 }
 
 function ExercisesMissing({
@@ -842,6 +699,183 @@ function ExercisesMissing({
     </View>
   );
 }
+
+function CircularProgressBar({ progress }: { progress: number }) {
+  const size = 200;
+  const center = size / 2;
+  const radius = center - 10;
+  const dashArray = 2 * Math.PI * radius;
+  const dashOffset = dashArray * ((100 - progress) / 100);
+
+  const done = progress >= 100;
+
+  return (
+    <Svg height={size} width={size} className="rotate-180">
+      <Circle
+        cx={center}
+        cy={center}
+        fill="transparent"
+        r={radius}
+        stroke={done ? "#00B000" : "#ddd"}
+        strokeWidth={10}
+      />
+      {!done && (
+        <Circle
+          cx={center}
+          cy={center}
+          fill="transparent"
+          r={radius}
+          stroke="#07c"
+          strokeWidth={10}
+          strokeDasharray={dashArray}
+          strokeDashoffset={dashOffset}
+          strokeLinecap="round"
+        />
+      )}
+    </Svg>
+  );
+}
+
+function WorkoutInfo({ workout }: { workout: any }) {
+  const [timeInSeconds, setTimeInSeconds] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const startedAt = new Date(workout.started_at);
+
+      setTimeInSeconds(
+        Math.floor((new Date().getTime() - startedAt.getTime()) / 1000)
+      );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const hoursSinceStart = Math.floor(timeInSeconds / 3600);
+  const minutesSinceStart = Math.floor((timeInSeconds % 3600) / 60);
+  const secondsSinceStart = Math.floor(timeInSeconds % 60);
+
+  const timers = [180, 120, 90, 60];
+
+  function formatMinutes(seconds: number) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    return `${minutes}:${
+      remainingSeconds < 10 ? `0${remainingSeconds}` : remainingSeconds
+    }`;
+  }
+
+  return (
+    <View className="mb-4">
+      <Text className="text-2xl font-bold">{workout.name}</Text>
+      <Text className="font-medium text-xs">
+        {hoursSinceStart > 0 && `${hoursSinceStart}:`}
+        {minutesSinceStart < 10 ? `0${minutesSinceStart}` : minutesSinceStart}:
+        {secondsSinceStart < 10 ? `0${secondsSinceStart}` : secondsSinceStart}
+      </Text>
+
+      <View className="flex-row items-center justify-between gap-4 mt-4">
+        {timers.map((timer) => (
+          <TouchableOpacity
+            className="p-2 bg-gray-100 flex-1 rounded flex-row items-center justify-center gap-1 mt-4"
+            onPress={() => {
+              useTimer.getState().start(timer);
+            }}
+          >
+            <Feather name="play" size={20} color="gray" />
+            <Text>{formatMinutes(timer)}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function Timer() {
+  const { timer, length } = useTimer();
+
+  const [timeInSeconds, setTimeInSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!timer) return;
+    const interval = setInterval(() => {
+      const startedAt = timer;
+
+      setTimeInSeconds(
+        Math.floor((new Date().getTime() - startedAt.getTime()) / 1000)
+      );
+    }, 1000);
+
+    return () => {
+      console.log("clearing interval");
+      setTimeInSeconds(0);
+      clearInterval(interval);
+    };
+  }, [timer]);
+
+  const hoursSinceStart = Math.floor(timeInSeconds / 3600);
+  const minutesSinceStart = Math.floor((timeInSeconds % 3600) / 60);
+  const secondsSinceStart = Math.floor(timeInSeconds % 60);
+
+  return (
+    <Modal
+      animationType="fade"
+      transparent
+      visible={!!timer}
+      onRequestClose={() => {
+        useTimer.getState().stop();
+      }}
+    >
+      <SafeAreaView className="flex-1 justify-center items-center  bg-black/20">
+        <View className="h-96 shadow rounded-2xl p-8 bg-white w-10/12">
+          <View className="flex-1 items-center justify-center">
+            <Text className="font-medium text-lg absolute">
+              {hoursSinceStart > 0 && `${hoursSinceStart}:`}
+              {minutesSinceStart < 10
+                ? `0${minutesSinceStart}`
+                : minutesSinceStart}
+              :
+              {secondsSinceStart < 10
+                ? `0${secondsSinceStart}`
+                : secondsSinceStart}
+            </Text>
+
+            <CircularProgressBar
+              progress={!timeInSeconds ? 0 : (timeInSeconds / length) * 100}
+            />
+          </View>
+
+          <TouchableOpacity
+            className="p-2 bg-gray-100 rounded flex-row items-center justify-center gap-1 mt-4"
+            onPress={() => {
+              useTimer.getState().stop();
+            }}
+          >
+            <Feather name="meh" size={20} color="gray" />
+            <Text>Stop Timer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
+const useTimer = create<{
+  timer: Date | null;
+  length: number;
+  start: (length: number) => void;
+  stop: () => void;
+}>((set) => ({
+  timer: null,
+  length: 0,
+  start: (length) => {
+    set({ timer: new Date(), length: length });
+  },
+  stop: () => {
+    set({ timer: null, length: 0 });
+  },
+}));
 
 function WorkoutScreen() {
   useKeepAwake();
@@ -886,8 +920,13 @@ function WorkoutScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-gray-200">
+    <ScrollView
+      className="flex-1 bg-gray-200"
+      keyboardShouldPersistTaps="handled"
+    >
       <View className="p-4">
+        <WorkoutInfo workout={currentWorkout} />
+
         {templateWithExercises?.exercises.map((exercise) => {
           return (
             <Exercise
@@ -898,92 +937,10 @@ function WorkoutScreen() {
           );
         })}
       </View>
+
+      <Timer />
     </ScrollView>
   );
-}
-
-function useCurrentWorkout() {
-  // useEffect(() => {
-  //   pb.collection("exercises").subscribe("*", function (e) {
-  //     query.refetch();
-  //   });
-
-  //   return () => {
-  //     pb.collection("exercises").unsubscribe("*");
-  //   };
-  // }, []);
-
-  const query = useQuery({
-    queryKey: ["currentWorkout"],
-    queryFn: () => {
-      return pb
-        .collection("workouts")
-        .getFirstListItem("ended_at = null")
-        .catch((err) => {
-          if (err.status === 404) {
-            return null;
-          }
-          throw err;
-        });
-    },
-  });
-
-  return query;
-}
-
-function useStartWorkout() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (template: Template) => {
-      return pb.collection("workouts").create({
-        template_id: template.id,
-        started_at: new Date(),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["currentWorkout"]);
-    },
-  });
-}
-
-function useCancelWorkout() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (workoutId: string) => {
-      return pb.collection("workouts").delete(workoutId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["currentWorkout"]);
-    },
-  });
-}
-
-function useFinishWorkout() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (workoutId: string) => {
-      return pb.collection("workouts").update(workoutId, {
-        ended_at: new Date(),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["currentWorkout"]);
-    },
-  });
-}
-
-function useCurrentUser() {
-  const [user, setUser] = useState<Record | Admin | null>(pb.authStore.model);
-
-  useEffect(() => {
-    pb.authStore.onChange(() => {
-      setUser(pb.authStore.model);
-    });
-  }, []);
-
-  return user;
 }
 
 function Router() {
@@ -1038,17 +995,6 @@ function Router() {
       </NavigationContainer>
     </SafeAreaView>
   );
-}
-
-function useLogin() {
-  return useMutation({
-    mutationFn: (data: { email: string; password: string }) => {
-      return pb.admins.authWithPassword(
-        data.email.toLocaleLowerCase(),
-        data.password
-      );
-    },
-  });
 }
 
 function AuthScreen() {
