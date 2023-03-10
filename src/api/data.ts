@@ -154,6 +154,49 @@ export const workouts: Template[] = [
   {
     id: 5,
     name: "Pull 2",
-    exercises: [],
+    exercises: [
+      {
+        name: "Chin ups",
+        sets: 4,
+        rest: 150,
+        reps: { min: 10, max: 12 },
+      },
+      {
+        name: "Seated Cable Row",
+        sets: 3,
+        rest: 120,
+        reps: { min: 10, max: 12 },
+      },
+      {
+        name: "BB Curl",
+        sets: 3,
+        rest: 120,
+        reps: { min: 8, max: 12 },
+      },
+      {
+        name: "Ring Row",
+        sets: 3,
+        rest: 120,
+        reps: { min: 12, max: 15 },
+      },
+      {
+        name: "Incline Curl",
+        sets: 3,
+        rest: 90,
+        reps: { min: 12, max: 15 },
+      },
+      {
+        name: "Ring Face Pull",
+        sets: 3,
+        rest: 90,
+        reps: { min: 15, max: 20 },
+      },
+      {
+        name: "Hangin Leg Raise",
+        sets: 3,
+        rest: 90,
+        reps: { min: 15, max: 15 },
+      },
+    ],
   },
 ];
