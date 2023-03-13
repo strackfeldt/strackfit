@@ -5,198 +5,81 @@ export type Template = {
     name: string;
     note?: string;
     sets: number;
-    rest: number;
-    reps: {
-      min: number;
-      max: number;
-    };
+    minRest?: number;
+    maxRest?: number;
+    minReps?: number;
+    maxReps: number;
+    superset?: "a" | "b" | "c" | "d" | "e";
   }>;
 };
 
-export const workouts: Template[] = [
-  // {
-  //   id: 1,
-  //   name: "Legs 1",
-  //   exercises: [],
-  // },
+const ULPPL: Template[] = [
+  {
+    id: 1,
+    name: "Upper",
+    exercises: [
+      { name: "Bench Press", sets: 3, minRest: 120, maxRest: 180, minReps: 4, maxReps: 6 },
+      { name: "Neutral Pull Up", sets: 3, minRest: 120, maxRest: 180, minReps: 6, maxReps: 8 },
+      { name: "Handstand Push Up", sets: 3, minRest: 120, maxRest: 180, minReps: 8, maxReps: 10 },
+      { name: "DB Row", sets: 3, minRest: 60, maxRest: 120, minReps: 10, maxReps: 12 },
+      { name: "Lateral Raise", sets: 3, minRest: 60, maxRest: 120, minReps: 12, maxReps: 15 },
+      { name: "BB Curl", sets: 3, minReps: 12, maxReps: 15, superset: "a" }, //                        Superset
+      { name: "Skullcrusher", sets: 3, maxRest: 60, minReps: 12, maxReps: 15, superset: "a" }, //      Superset
+      { name: "Hanging Leg Raise", sets: 4, minRest: 60, maxRest: 120, minReps: 15, maxReps: 15 },
+    ],
+  },
   {
     id: 2,
-    name: "Push 1",
+    name: "Lower",
     exercises: [
-      {
-        name: "Bench Press",
-        sets: 3,
-        rest: 150,
-        reps: { min: 6, max: 8 },
-      },
-      {
-        name: "DB Seated Press",
-        sets: 3,
-        rest: 120,
-        reps: { min: 10, max: 12 },
-      },
-      {
-        name: "Dips",
-        sets: 3,
-        rest: 120,
-        reps: { min: 8, max: 12 },
-      },
-      {
-        name: "Peck Deck",
-        sets: 3,
-        rest: 120,
-        reps: { min: 12, max: 15 },
-      },
-      {
-        name: "Skullcrusher",
-        sets: 3,
-        rest: 90,
-        reps: { min: 12, max: 15 },
-      },
-      {
-        name: "Lateral Raise",
-        sets: 3,
-        rest: 90,
-        reps: { min: 15, max: 15 },
-      },
+      { name: "Back Squat", sets: 4, minRest: 120, maxRest: 180, minReps: 4, maxReps: 4 },
+      { name: "Stiff Leg Deadlift", sets: 3, maxRest: 150, minReps: 10, maxReps: 12 },
+      { name: "Dumbbell Walking Lunge", sets: 2, maxRest: 120, minReps: 20, maxReps: 20 },
+      { name: "Leg Curl", sets: 3, maxRest: 90, minReps: 15, maxReps: 15 },
+      { name: "Leg Extension", sets: 3, maxRest: 90, minReps: 15, maxReps: 15 },
+      { name: "Standing Calf Raise", sets: 4, maxRest: 90, minReps: 15, maxReps: 20 },
+      { name: "Hanging Leg Raise", sets: 4, maxRest: 90, minReps: 15, maxReps: 15 },
     ],
   },
   {
     id: 3,
-    name: "Pull 1",
+    name: "Push",
     exercises: [
-      {
-        name: "Neutral Pull Up",
-        sets: 4,
-        rest: 150,
-        reps: { min: 6, max: 8 },
-      },
-      {
-        name: "DB Row",
-        sets: 3,
-        rest: 120,
-        reps: { min: 10, max: 12 },
-      },
-      {
-        name: "BB Curl",
-        sets: 3,
-        rest: 120,
-        reps: { min: 8, max: 12 },
-      },
-      {
-        name: "Lat Pulldown",
-        sets: 2,
-        rest: 120,
-        reps: { min: 12, max: 15 },
-      },
-      {
-        name: "Preacher Curl",
-        sets: 3,
-        rest: 90,
-        reps: { min: 12, max: 15 },
-      },
-      {
-        name: "Ring Face Pull",
-        sets: 3,
-        rest: 90,
-        reps: { min: 15, max: 15 },
-      },
+      { name: "Machine Chest Press", sets: 4, maxRest: 150, minReps: 10, maxReps: 12 },
+      { name: "DB Seated Press", sets: 3, maxRest: 120, minReps: 10, maxReps: 12 },
+      { name: "Dips", sets: 2, maxRest: 120, minReps: 10, maxReps: 12 },
+      { name: "Peck Deck", sets: 3, maxRest: 120, minReps: 12, maxReps: 15 },
+      { name: "Overhead Tricep Extension", sets: 3, maxRest: 120, minReps: 12, maxReps: 15 },
+      { name: "Cable Lateral Raise", sets: 3, maxRest: 120, minReps: 15, maxReps: 20 },
+      { name: "Hanging Leg Raise", sets: 4, maxRest: 90, minReps: 15, maxReps: 20 },
     ],
   },
   {
     id: 4,
-    name: "Push 2",
+    name: "Pull",
     exercises: [
-      {
-        name: "Machine Chest Press",
-        sets: 4,
-        rest: 150,
-        reps: { min: 10, max: 12 },
-      },
-      {
-        name: "Machine OHP",
-        sets: 3,
-        rest: 150,
-        reps: { min: 10, max: 12 },
-      },
-      {
-        name: "Chest Fly",
-        sets: 3,
-        rest: 120,
-        reps: { min: 15, max: 20 },
-      },
-      {
-        name: "Overhead Tricep Extension",
-        sets: 3,
-        rest: 120,
-        reps: { min: 12, max: 15 },
-      },
-      {
-        name: "Cable Lateral Raise",
-        sets: 3,
-        rest: 120,
-        reps: { min: 12, max: 15 },
-      },
-      {
-        name: "Tricep Pushdown",
-        sets: 3,
-        rest: 90,
-        reps: { min: 15, max: 20 },
-      },
-      {
-        name: "Hangin Leg Raise",
-        sets: 3,
-        rest: 90,
-        reps: { min: 15, max: 15 },
-      },
+      { name: "Chin ups", sets: 4, maxRest: 150, minReps: 10, maxReps: 12 },
+      { name: "Seated Cable Row", sets: 3, maxRest: 120, minReps: 10, maxReps: 12 },
+      { name: "Lat Pulldown", sets: 2, maxRest: 120, minReps: 12, maxReps: 15 },
+      { name: "BB Curl", sets: 3, maxRest: 120, minReps: 10, maxReps: 12 },
+      { name: "Incline Curl", sets: 3, maxRest: 90, minReps: 12, maxReps: 15 },
+      { name: "Ring Face Pull", sets: 3, maxRest: 90, minReps: 15, maxReps: 20 },
+      { name: "Hanging Leg Raise", sets: 4, maxRest: 90, minReps: 15, maxReps: 20 },
     ],
   },
   {
     id: 5,
-    name: "Pull 2",
+    name: "Legs",
     exercises: [
-      {
-        name: "Chin ups",
-        sets: 4,
-        rest: 150,
-        reps: { min: 10, max: 12 },
-      },
-      {
-        name: "Seated Cable Row",
-        sets: 3,
-        rest: 120,
-        reps: { min: 10, max: 12 },
-      },
-      {
-        name: "BB Curl",
-        sets: 3,
-        rest: 120,
-        reps: { min: 8, max: 12 },
-      },
-      {
-        name: "Ring Row",
-        sets: 3,
-        rest: 120,
-        reps: { min: 12, max: 15 },
-      },
-      {
-        name: "Incline Curl",
-        sets: 3,
-        rest: 90,
-        reps: { min: 12, max: 15 },
-      },
-      {
-        name: "Ring Face Pull",
-        sets: 3,
-        rest: 90,
-        reps: { min: 15, max: 20 },
-      },
-      {
-        name: "Hangin Leg Raise",
-        sets: 3,
-        rest: 90,
-        reps: { min: 15, max: 15 },
-      },
+      { name: "Deadlift", sets: 2, maxRest: 180, minReps: 4, maxReps: 6 },
+      { name: "Bulgarian Split Squats", sets: 2, maxRest: 180, minReps: 8, maxReps: 10 },
+      { name: "Hip Thrust", sets: 4, maxRest: 180, minReps: 10, maxReps: 12 },
+      { name: "Unilateral Leg Press", sets: 3, maxRest: 120, minReps: 12, maxReps: 15 },
+      //
+      //
+      { name: "Hanging Leg Raise", sets: 4, maxRest: 90, minReps: 15, maxReps: 15 },
     ],
   },
 ];
+
+export default ULPPL;

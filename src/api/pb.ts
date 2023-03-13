@@ -3,5 +3,8 @@ import { AsyncAuthStore } from "./async-auth-store";
 
 export const pb = new PocketBase(
   "https://strackfit.fly.dev/",
-  new AsyncAuthStore()
+  new AsyncAuthStore(),
+  "de"
 );
+
+pb.autoCancellation(false);

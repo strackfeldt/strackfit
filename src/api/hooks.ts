@@ -3,6 +3,12 @@ import { Admin, Record } from "pocketbase";
 import { useEffect, useState } from "react";
 import { pb } from "./pb";
 
+const TEMP_ID = "__temp__";
+
+export function isOptimistic(record: Record) {
+  return record.id === TEMP_ID;
+}
+
 export function useCurrentUser() {
   const [user, setUser] = useState<Record | Admin | null>(pb.authStore.model);
 
@@ -17,10 +23,7 @@ export function useCurrentUser() {
 export function useLogin() {
   return useMutation({
     mutationFn: (data: { email: string; password: string }) => {
-      return pb.admins.authWithPassword(
-        data.email.toLocaleLowerCase(),
-        data.password
-      );
+      return pb.admins.authWithPassword(data.email.toLocaleLowerCase(), data.password);
     },
   });
 }
@@ -30,8 +33,7 @@ export function useLogout() {
 export function useWorkouts() {
   return useQuery({
     queryKey: ["workouts"],
-    queryFn: () =>
-      pb.collection("workouts").getFullList({ sort: "-started_at" }),
+    queryFn: () => pb.collection("workouts").getFullList({ sort: "-started_at" }),
   });
 }
 export function useCurrentWorkout() {
@@ -119,9 +121,7 @@ export function useCreateMissingExercises() {
     }) => {
       return Promise.all(
         templateExercises.map((exercise) => {
-          const exerciseData = serverExercises.find(
-            (e) => e.name === exercise.name
-          );
+          const exerciseData = serverExercises.find((e) => e.name === exercise.name);
 
           if (!exerciseData) {
             pb.collection("exercises").create({
@@ -136,28 +136,23 @@ export function useCreateMissingExercises() {
     },
   });
 }
-export function useLogs(workoutId: string, exerciseId: string) {
+export function useLogs(workoutId: string, opts: { enabled?: boolean } = {}) {
   return useQuery({
-    queryKey: ["wokout", workoutId, "logs", exerciseId],
+    queryKey: ["wokout", workoutId, "logs"],
     queryFn: () => {
       return pb.collection("logs").getFullList({
-        filter: `workout = "${workoutId}" && exercise = "${exerciseId}"`,
+        filter: `workout = "${workoutId}"`,
         sort: "created",
       });
     },
+    enabled: opts?.enabled,
   });
 }
 export function useCreateLog() {
   const queryClient = useQueryClient();
 
   return useMutation(
-    (data: {
-      workoutId: string;
-      exerciseId: string;
-      weight: number;
-      reps: number;
-      rpe: number;
-    }) => {
+    (data: { workoutId: string; exerciseId: string; weight: number; reps: number; rpe: number }) => {
       return pb.collection("logs").create({
         workout: data.workoutId,
         exercise: data.exerciseId,
@@ -169,48 +164,32 @@ export function useCreateLog() {
     {
       onMutate: async (data) => {
         await queryClient.cancelQueries({
-          queryKey: ["wokout", data.workoutId, "logs", data.exerciseId],
+          queryKey: ["wokout", data.workoutId, "logs"],
         });
 
-        const previousLogs = queryClient.getQueryData([
-          "wokout",
-          data.workoutId,
-          "logs",
-          data.exerciseId,
-        ]);
+        const previousLogs = queryClient.getQueryData(["wokout", data.workoutId, "logs"]);
 
-        queryClient.setQueryData(
-          ["wokout", data.workoutId, "logs", data.exerciseId],
-          (old: any = []) => {
-            return [
-              ...old,
-              {
-                id: "temp",
-                workout: data.workoutId,
-                exercise: data.exerciseId,
-                weight: data.weight,
-                reps: data.reps,
-                rpe: data.rpe,
-              },
-            ];
-          }
-        );
+        queryClient.setQueryData(["wokout", data.workoutId, "logs"], (old: any = []) => {
+          return [
+            ...old,
+            {
+              id: TEMP_ID,
+              workout: data.workoutId,
+              exercise: data.exerciseId,
+              weight: data.weight,
+              reps: data.reps,
+              rpe: data.rpe,
+            },
+          ];
+        });
 
         return { previousLogs };
       },
       onError: (err, newTodo, context: any) => {
-        queryClient.setQueryData(
-          ["wokout", newTodo.workoutId, "logs", newTodo.exerciseId],
-          context.previousLogs
-        );
+        queryClient.setQueryData(["wokout", newTodo.workoutId, "logs"], context.previousLogs);
       },
       onSuccess: (data, vars) => {
-        queryClient.invalidateQueries([
-          "wokout",
-          vars.workoutId,
-          "logs",
-          vars.exerciseId,
-        ]);
+        queryClient.invalidateQueries(["wokout", vars.workoutId, "logs"]);
       },
     }
   );
