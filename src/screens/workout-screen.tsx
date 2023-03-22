@@ -374,7 +374,7 @@ function Timer() {
     //   // await Audio.setAudioModeAsync({
     //   //   staysActiveInBackground: true,
     //   // });
-    //   const { sound } = await Audio.Sound.createAsync(require("../assets/boxing-bell-cut.mp3"));
+    //   const { sound } = await Audio.Sound.createAsync(require("../src/assets/boxing-bell-cut.mp3"));
     //   await sound.playAsync();
     //   await sound.unloadAsync();
     // } catch (error) {
