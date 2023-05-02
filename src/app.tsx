@@ -3,7 +3,7 @@ import * as Notifications from "expo-notifications";
 import React, { useEffect } from "react";
 import { AppState, AppStateStatus, KeyboardAvoidingView } from "react-native";
 import { useCurrentUser } from "./data/hooks";
-import { Router } from "./router";
+import { AuthedRouter } from "./router";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -40,7 +40,6 @@ export async function registerForPushNotificationsAsync() {
 }
 
 export default function App() {
-  const user = useCurrentUser();
 
   useEffect(() => {
     registerForPushNotificationsAsync();
@@ -55,7 +54,7 @@ export default function App() {
   return (
     <QueryClientProvider client={qc}>
       <KeyboardAvoidingView className="flex-1 dark:bg-black" behavior="padding" enabled>
-        <Router user={user} />
+        <AuthedRouter />
       </KeyboardAvoidingView>
     </QueryClientProvider>
   );

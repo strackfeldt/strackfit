@@ -7,7 +7,7 @@ import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { Alert, SafeAreaView, Text, TouchableOpacity, useColorScheme } from "react-native";
 import { useTimer } from "./components/use-timer";
-import { useCancelWorkout, useCurrentWorkout, useFinishWorkout } from "./data/hooks";
+import { useCancelWorkout, useCurrentUser, useCurrentWorkout, useFinishWorkout } from "./data/hooks";
 import { HistoryScreen } from "./screens/history-screen";
 import { HomeScreen } from "./screens/home-screen";
 import { LoginScreen } from "./screens/login-screen";
@@ -89,7 +89,8 @@ function WorkoutStack() {
     </Stack.Navigator>
   );
 }
-export function Router({ user }: { user: any }) {
+
+function AppRouter() {
   const { data: currentWorkout, isLoading } = useCurrentWorkout();
 
   const scheme = useColorScheme();
@@ -97,10 +98,6 @@ export function Router({ user }: { user: any }) {
   if (isLoading) return null;
 
   const isWorkingOut = !!currentWorkout;
-
-  if (!user) {
-    return <LoginScreen />;
-  }
 
   return (
     <SafeAreaView className="flex-1">
@@ -164,4 +161,14 @@ export function Router({ user }: { user: any }) {
       </NavigationContainer>
     </SafeAreaView>
   );
+}
+
+export function AuthedRouter() {
+  const user = useCurrentUser();
+
+  if (!user) {
+    return <LoginScreen />;
+  }
+
+  return <AppRouter />;
 }
