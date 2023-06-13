@@ -11,10 +11,10 @@ Welcome to StrakFit! This app is the product of a few caffeinated nights, one as
 ## Installation
 
 1. Clone the repo.
-2. Brace yourself.
-3. Open the app.
-4. Try a workout.
-5. Contemplate your life choices.
+2. Setup backend stuff in Pocketbase
+3. Brace yourself.
+4. Open the app.
+5. Try a workout.
 
 ---
 
