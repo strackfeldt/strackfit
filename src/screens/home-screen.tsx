@@ -3,8 +3,8 @@ import { formatDistanceToNow } from "date-fns";
 import * as Haptics from "expo-haptics";
 import React from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
-import workouts from "../data/data";
-import { useStartWorkout, useWorkouts } from "../data/hooks";
+import workouts from "../lib/data";
+import { useStartWorkout, useWorkouts } from "../lib/hooks";
 
 export function HomeScreen() {
   const { mutate } = useStartWorkout();
@@ -12,14 +12,14 @@ export function HomeScreen() {
   const { data } = useWorkouts();
 
   return (
-    <View className="flex-1 bg-zinc-200 dark:bg-zinc-800 p-2  flex-row flex-wrap">
+    <View className="flex-1 bg-zinc-800 p-2  flex-row flex-wrap">
       {workouts.map((workout) => {
         const lastPerformed = data?.find((w) => w.template_id === workout.id)?.started_at;
 
         return (
           <View key={workout.id} className="w-1/2 p-2">
             <TouchableOpacity
-              className="p-4 bg-white dark:bg-black rounded-lg h-32"
+              className="p-4 bg-black rounded-lg h-32"
               key={workout.id}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -38,7 +38,7 @@ export function HomeScreen() {
                 ]);
               }}
             >
-              <Text className="dark:text-white font-medium">{workout.name}</Text>
+              <Text className="text-white font-medium">{workout.name}</Text>
               <Text numberOfLines={3} className="text-xs text-zinc-400 mt-2">
                 {workout.exercises.map((ex) => ex.name).join(", ")}
               </Text>

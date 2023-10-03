@@ -12,7 +12,7 @@ import {
 import de from "date-fns/locale/de";
 import React, { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { useWorkouts } from "../data/hooks";
+import { useWorkouts } from "../lib/hooks";
 
 function WorkoutCalendar({ workouts }: { workouts: any[] }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -29,8 +29,8 @@ function WorkoutCalendar({ workouts }: { workouts: any[] }) {
     <View className="border-b border-zinc-700 p-4">
       <View className="flex flex-row justify-between rounded-lg overflow-hidden mb-2">
         {["M", "T", "W", "T", "F", "S", "S"].map((day, index) => (
-          <View key={`${day}-${index}`} className="p-4 bg-white dark:bg-black w-[calc(100/7)%]">
-            <Text className="text-xs font-medium dark:text-white">{day}</Text>
+          <View key={`${day}-${index}`} className="p-4 bg-white bg-black w-[calc(100/7)%]">
+            <Text className="text-xs font-medium text-white">{day}</Text>
           </View>
         ))}
       </View>
@@ -49,11 +49,11 @@ function WorkoutCalendar({ workouts }: { workouts: any[] }) {
             <View
               key={`${date.getMonth()} ${day}`}
               className={`p-4 items-center justify-center w-[calc(100/7)%] ${
-                isPrevMonth || isNextMonth ? "bg-zinc-100 dark:bg-black" : "bg-white dark:bg-black"
+                isPrevMonth || isNextMonth ? "bg-black" : "bg-black"
               }`}
             >
               {hasWorkout && <View className="w-6 h-6 rounded-lg bg-teal-500 absolute" />}
-              <Text className={`text-xs font-medium ${hasWorkout && "text-white"} dark:text-white`}>{day}</Text>
+              <Text className={`text-xs font-medium ${hasWorkout && "text-white"} text-white`}>{day}</Text>
             </View>
           );
         })}
@@ -79,16 +79,16 @@ export function HistoryScreen() {
   if (!data) return null;
 
   return (
-    <View className="flex-1 bg-zinc-200 dark:bg-zinc-800">
+    <View className="flex-1 bg-zinc-800">
       <WorkoutCalendar workouts={data} />
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="p-4">
           {data?.map((workout) => (
-            <View key={workout.id} className="p-4 bg-white dark:bg-black rounded-lg mb-4">
-              <Text className="dark:text-white">{workout.name}</Text>
-              <Text className="dark:text-white">{workoutLength(workout)}</Text>
-              <Text className="dark:text-white">{new Date(workout.created).toLocaleString("de")}</Text>
+            <View key={workout.id} className="p-4 bg-black rounded-lg mb-4">
+              <Text className="text-white">{workout.name}</Text>
+              <Text className="text-white">{workoutLength(workout)}</Text>
+              <Text className="text-white">{new Date(workout.created).toLocaleString("de")}</Text>
             </View>
           ))}
         </View>

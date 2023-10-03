@@ -22,8 +22,8 @@ export function useCurrentUser() {
 }
 export function useLogin() {
   return useMutation({
-    mutationFn: (data: { email: string; password: string }) => {
-      return pb.admins.authWithPassword(data.email.toLocaleLowerCase(), data.password);
+    mutationFn: (data: { username: string; password: string }) => {
+      return pb.collection("users").authWithPassword(data.username.toLocaleLowerCase(), data.password);
     },
   });
 }

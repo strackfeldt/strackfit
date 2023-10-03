@@ -2,7 +2,6 @@ import { focusManager, QueryClient, QueryClientProvider } from "@tanstack/react-
 import * as Notifications from "expo-notifications";
 import React, { useEffect } from "react";
 import { AppState, AppStateStatus, KeyboardAvoidingView } from "react-native";
-import { useCurrentUser } from "./data/hooks";
 import { AuthedRouter } from "./router";
 
 Notifications.setNotificationHandler({
@@ -40,7 +39,6 @@ export async function registerForPushNotificationsAsync() {
 }
 
 export default function App() {
-
   useEffect(() => {
     registerForPushNotificationsAsync();
   }, []);
@@ -53,7 +51,7 @@ export default function App() {
 
   return (
     <QueryClientProvider client={qc}>
-      <KeyboardAvoidingView className="flex-1 dark:bg-black" behavior="padding" enabled>
+      <KeyboardAvoidingView className="flex-1 bg-black" behavior="padding" enabled>
         <AuthedRouter />
       </KeyboardAvoidingView>
     </QueryClientProvider>

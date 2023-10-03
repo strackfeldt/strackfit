@@ -9,14 +9,14 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  useColorScheme,
   Vibration,
   View,
+  useColorScheme,
 } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 import { Button } from "../components/button";
 import { useTimer } from "../components/use-timer";
-import workouts, { Template } from "../data/data";
+import workouts, { Template } from "../lib/data";
 import {
   isOptimistic,
   useCreateLog,
@@ -24,7 +24,7 @@ import {
   useCurrentWorkout,
   useExercises,
   useLogs,
-} from "../data/hooks";
+} from "../lib/hooks";
 
 export function parseValue(value: string) {
   if (value.includes(",")) {
@@ -96,14 +96,14 @@ function Exercise({
   }
 
   return (
-    <View className={clsx("p-4 bg-white dark:bg-black rounded-lg mb-2", supersetIndicator)} key={exercise.id}>
+    <View className={clsx("p-4 bg-black rounded-lg mb-2", supersetIndicator)} key={exercise.id}>
       <TouchableOpacity
         onPress={() => {
           setOpen(!open);
         }}
       >
         <View className="flex-row justify-between items-center">
-          <Text className="font-medium dark:text-white text-lg">{exercise.name}</Text>
+          <Text className="font-medium text-white text-lg">{exercise.name}</Text>
           {/* {exercise.superset && (
               <View className="inline-flex rounded-full overflow-hidden">
                 <Text
@@ -127,25 +127,25 @@ function Exercise({
         <>
           <View className="flex-row justify-between items-center mt-3">
             <View className="flex-row gap-1">
-              <Text className="font-medium dark:text-white">{exercise.sets}</Text>
-              <Text className="text-zinc-500 dark:text-zinc-400">Sets</Text>
+              <Text className="font-medium text-white">{exercise.sets}</Text>
+              <Text className="text-zinc-400">Sets</Text>
             </View>
 
             <View className="flex-row gap-1">
-              <Text className="font-medium dark:text-white">{repDisplay}</Text>
-              <Text className="text-zinc-500 dark:text-zinc-400">Reps</Text>
+              <Text className="font-medium text-white">{repDisplay}</Text>
+              <Text className="text-zinc-400">Reps</Text>
             </View>
 
             <View className="flex-row gap-1">
-              <Text className="font-medium dark:text-white">{restDisplay}</Text>
-              <Text className="text-zinc-500 dark:text-zinc-400">Rest</Text>
+              <Text className="font-medium text-white">{restDisplay}</Text>
+              <Text className="text-zinc-400">Rest</Text>
             </View>
 
             <View>
               {allDone ? (
                 <Feather name="check" size={20} color="gray" />
               ) : (
-                <Text className="text-zinc-500 dark:text-zinc-400">
+                <Text className="text-zinc-400">
                   {exercise.logs?.length} / {exercise.sets}
                 </Text>
               )}
@@ -156,20 +156,20 @@ function Exercise({
             {exercise.logs?.map((log, index) => (
               <View className={`flex-row justify-between ${isOptimistic(log) ? "opacity-40" : ""}`} key={log.id}>
                 <View className="flex-row gap-2 items-center">
-                  <Text className="text-zinc-500 dark:text-zinc-400">#</Text>
-                  <Text className="font-medium dark:text-white">{index + 1}</Text>
+                  <Text className="text-zinc-400">#</Text>
+                  <Text className="font-medium text-white">{index + 1}</Text>
                 </View>
                 <View className="flex-row gap-2 items-center">
-                  <Text className="text-zinc-500 dark:text-zinc-400">Reps</Text>
-                  <Text className="font-medium dark:text-white w-10 text-center">{log.reps}</Text>
+                  <Text className="text-zinc-400">Reps</Text>
+                  <Text className="font-medium text-white w-10 text-center">{log.reps}</Text>
                 </View>
                 <View className="flex-row gap-2 items-center">
-                  <Text className="text-zinc-500 dark:text-zinc-400">Weight</Text>
-                  <Text className="font-medium dark:text-white w-10 text-center">{log.weight}</Text>
+                  <Text className="text-zinc-400">Weight</Text>
+                  <Text className="font-medium text-white w-10 text-center">{log.weight}</Text>
                 </View>
                 <View className="flex-row gap-2 items-center">
-                  <Text className="text-zinc-500 dark:text-zinc-400">RPE</Text>
-                  <Text className="font-medium dark:text-white w-10 text-center">{log.rpe}</Text>
+                  <Text className="text-zinc-400">RPE</Text>
+                  <Text className="font-medium text-white w-10 text-center">{log.rpe}</Text>
                 </View>
               </View>
             ))}
@@ -179,35 +179,35 @@ function Exercise({
             <View>
               <View className="flex-row items-center justify-between mt-2">
                 <View className="flex-row gap-2 items-center">
-                  <Text className="text-zinc-500 dark:text-zinc-400">#</Text>
-                  <Text className="font-medium dark:text-white">{exercise.logs.length + 1}</Text>
+                  <Text className="text-zinc-400">#</Text>
+                  <Text className="font-medium text-white">{exercise.logs.length + 1}</Text>
                 </View>
 
                 <View className="flex-row items-center gap-2">
-                  <Text className="dark:text-white">Reps</Text>
+                  <Text className="text-white">Reps</Text>
                   <TextInput
                     keyboardType="number-pad"
-                    className="rounded-lg bg-zinc-100 p-1 w-10 text-center dark:bg-zinc-800 dark:text-white"
+                    className="rounded-lg p-1 w-10 text-center bg-zinc-800 text-white"
                     value={reps}
                     onChangeText={setReps}
                   />
                 </View>
 
                 <View className="flex-row items-center gap-2">
-                  <Text className="dark:text-white">Weight</Text>
+                  <Text className="text-white">Weight</Text>
                   <TextInput
                     keyboardType="numeric"
-                    className="rounded-lg bg-zinc-100 p-1 w-10 text-center dark:bg-zinc-800 dark:text-white"
+                    className="rounded-lg p-1 w-10 text-center bg-zinc-800 text-white"
                     value={weight}
                     onChangeText={setWeight}
                   />
                 </View>
 
                 <View className="flex-row items-center gap-2">
-                  <Text className="dark:text-white">RPE</Text>
+                  <Text className="text-white">RPE</Text>
                   <TextInput
                     keyboardType="numeric"
-                    className="rounded-lg bg-zinc-100 p-1 w-10 text-center dark:bg-zinc-800 dark:text-white"
+                    className="rounded-lg p-1 w-10 text-center bg-zinc-800 text-white"
                     value={rpe}
                     onChangeText={setRpe}
                   />
@@ -246,7 +246,7 @@ function Exercise({
                   }}
                 >
                   <Feather name="plus" size={20} color="gray" />
-                  <Text className="dark:text-white">Add Set</Text>
+                  <Text className="text-white">Add Set</Text>
                 </Button>
               </View>
             </View>
@@ -286,8 +286,8 @@ function WorkoutInfo({ workout }: { workout: any }) {
     <View className="px-4 pt-3 pb-4 border-b border-zinc-700">
       <View className="flex-row items-center justify-between">
         <View>
-          <Text className="text-2xl dark:text-white font-bold">{workout.name}</Text>
-          <Text className="font-medium text-xs dark:text-zinc-300">
+          <Text className="text-2xl text-white font-bold">{workout.name}</Text>
+          <Text className="font-medium text-xs text-zinc-300">
             {hoursSinceStart > 0 && `${hoursSinceStart}:`}
             {minutesSinceStart < 10 ? `0${minutesSinceStart}` : minutesSinceStart}:
             {secondsSinceStart < 10 ? `0${secondsSinceStart}` : secondsSinceStart}
@@ -301,13 +301,13 @@ function WorkoutInfo({ workout }: { workout: any }) {
         {timers.map((timer) => (
           <TouchableOpacity
             key={timer}
-            className="p-2 bg-zinc-100 dark:bg-black flex-1 rounded-lg flex-row items-center justify-center"
+            className="p-2 bg-black flex-1 rounded-lg flex-row items-center justify-center"
             onPress={() => {
               useTimer.getState().start(timer);
             }}
           >
             <Feather name="play" size={12} color="gray" />
-            <Text className="ml-0.5 text-zinc-800 dark:text-zinc-300 font-medium">{formatMinutes(timer)}</Text>
+            <Text className="ml-0.5 text-zinc-300 font-medium">{formatMinutes(timer)}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -421,7 +421,7 @@ function Timer() {
           setModalVisible(true);
         }}
       >
-        <Text className="font-medium dark:text-zinc-300">
+        <Text className="font-medium text-zinc-300">
           {hoursSinceStart > 0 && `${hoursSinceStart}:`}
           {minutesSinceStart < 10 ? `0${minutesSinceStart}` : minutesSinceStart}:
           {secondsSinceStart < 10 ? `0${secondsSinceStart}` : secondsSinceStart}
@@ -437,7 +437,7 @@ function Timer() {
         }}
       >
         <View className="flex-1 justify-end items-center bg-zinc-700/40">
-          <View className="rounded-t-2xl p-4 bg-white dark:bg-black w-full">
+          <View className="rounded-t-2xl p-4 bg-black w-full">
             <View className="flex-row justify-end">
               <Button
                 onPress={() => {
@@ -449,7 +449,7 @@ function Timer() {
             </View>
 
             <View className="items-center justify-center h-72">
-              <Text className="font-medium text-2xl dark:text-zinc-300 absolute">
+              <Text className="font-medium text-2xl text-zinc-300 absolute">
                 {hoursSinceStart > 0 && `${hoursSinceStart}:`}
                 {minutesSinceStart < 10 ? `0${minutesSinceStart}` : minutesSinceStart}:
                 {secondsSinceStart < 10 ? `0${secondsSinceStart}` : secondsSinceStart}
@@ -460,14 +460,14 @@ function Timer() {
 
             <View className="mb-8">
               <Button
-                // className="p-2 bg-zinc-100 rounded-lg flex-row items-center justify-center gap-1 mt-4 dark:bg-zinc-800"
+                // className="p-2 rounded-lg flex-row items-center justify-center gap-1 mt-4 bg-zinc-800"
                 onPress={() => {
                   setModalVisible(false);
                   useTimer.getState().stop();
                 }}
               >
                 <Feather name="square" size={20} color="gray" />
-                <Text className="dark:text-white">Stop Timer</Text>
+                <Text className="text-white">Stop Timer</Text>
               </Button>
             </View>
           </View>
@@ -486,19 +486,19 @@ function ExercisesMissing({
   const { mutate: createMissingExercises } = useCreateMissingExercises();
 
   return (
-    <View className="flex-1 justify-center items-center bg-white dark:bg-zinc-800">
-      <Text className="text-lg font-bold mb-2 dark:text-white">Some exercises are missing</Text>
+    <View className="flex-1 justify-center items-center bg-zinc-800">
+      <Text className="text-lg font-bold mb-2 text-white">Some exercises are missing</Text>
       <View className="mb-4">
         {templateExercises
           .filter((t) => !serverExercises.find((s) => s.name === t.name))
           .map((t) => (
-            <Text key={t.id} className="text-sm dark:text-white">
+            <Text key={t.id} className="text-sm text-white">
               {t.name}
             </Text>
           ))}
       </View>
       <Button
-        // className="p-2 bg-zinc-100 dark:bg-black rounded-lg flex-row items-center justify-center"
+        // className="p-2 bg-black rounded-lg flex-row items-center justify-center"
         onPress={() => {
           createMissingExercises({
             templateExercises,
@@ -507,7 +507,7 @@ function ExercisesMissing({
         }}
       >
         <Feather name="plus" size={20} color="gray" />
-        <Text className="dark:text-white">Add Exercises</Text>
+        <Text className="text-white">Add Exercises</Text>
       </Button>
     </View>
   );
@@ -556,7 +556,7 @@ export function WorkoutScreen() {
   };
 
   return (
-    <View className="flex-1 bg-zinc-200 dark:bg-zinc-800">
+    <View className="flex-1 bg-zinc-800">
       <WorkoutInfo workout={currentWorkout} />
 
       <ScrollView

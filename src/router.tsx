@@ -7,12 +7,11 @@ import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { Alert, SafeAreaView, Text, TouchableOpacity, useColorScheme } from "react-native";
 import { useTimer } from "./components/use-timer";
-import { useCancelWorkout, useCurrentUser, useCurrentWorkout, useFinishWorkout } from "./data/hooks";
+import { useCancelWorkout, useCurrentUser, useCurrentWorkout, useFinishWorkout } from "./lib/hooks";
 import { HistoryScreen } from "./screens/history-screen";
 import { HomeScreen } from "./screens/home-screen";
 import { LoginScreen } from "./screens/login-screen";
 import { SettingsScreen } from "./screens/settings-screen";
-import { StatsScreen } from "./screens/stats-screen";
 import { WorkoutScreen } from "./screens/workout-screen";
 
 const Tab = createBottomTabNavigator();
@@ -81,7 +80,7 @@ function WorkoutStack() {
                 ]);
               }}
             >
-              <Text className="dark:text-white">Finish</Text>
+              <Text className="text-white">Finish</Text>
             </TouchableOpacity>
           ),
         }}
@@ -142,13 +141,13 @@ function AppRouter() {
                 tabBarIcon: ({ color, size }) => <Feather name="calendar" color={color} size={size} />,
               }}
             />
-            <Tab.Screen
+            {/* <Tab.Screen
               name="Stats"
               component={StatsScreen}
               options={{
                 tabBarIcon: ({ color, size }) => <Feather name="activity" color={color} size={size} />,
               }}
-            />
+            /> */}
             <Tab.Screen
               name="Settings"
               component={SettingsScreen}
