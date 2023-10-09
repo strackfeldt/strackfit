@@ -63,11 +63,11 @@ function Exercise({
     return `${minutes}:${remainingSeconds}`;
   };
 
-  const restDisplay = !exercise.maxRest
+  const restDisplay = !exercise.rest
     ? 0
-    : !exercise.minRest || exercise.minRest === exercise.maxRest
-    ? formatRest(exercise.maxRest)
-    : `${formatRest(exercise.minRest)}-${formatRest(exercise.maxRest)}`;
+    : !exercise.minRest || exercise.minRest === exercise.rest
+    ? formatRest(exercise.rest)
+    : `${formatRest(exercise.minRest)}-${formatRest(exercise.rest)}`;
 
   return (
     <View className="p-4 bg-black rounded-lg mb-2" key={exercise.id}>
@@ -181,8 +181,8 @@ function Exercise({
                   onPress={() => {
                     if (!weight || !reps || !rpe) return;
 
-                    if (exercise.maxRest) {
-                      useTimer.getState().start(exercise.maxRest, exercise.minRest);
+                    if (exercise.rest) {
+                      useTimer.getState().start(exercise.rest, exercise.minRest);
                     }
 
                     mutate(
