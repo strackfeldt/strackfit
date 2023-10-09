@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import * as Haptics from "expo-haptics";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
-import { Alert, SafeAreaView, Text, TouchableOpacity, useColorScheme } from "react-native";
+import { Alert, Text, TouchableOpacity, useColorScheme } from "react-native";
 import { useTimer } from "./components/use-timer";
 import { useCancelWorkout, useCurrentUser, useCurrentWorkout, useFinishWorkout } from "./lib/hooks";
 import { HomeScreen } from "./screens/home-screen";
@@ -24,7 +24,6 @@ function HomeStack() {
         options={{
           headerRight: ({ tintColor }) => (
             <TouchableOpacity
-              className="px-6"
               onPress={() => {
                 navigation.navigate("Settings");
               }}
@@ -108,25 +107,23 @@ function AppRouter() {
   const isWorkingOut = !!currentWorkout;
 
   return (
-    <SafeAreaView className="flex-1">
-      <NavigationContainer
-        theme={
-          scheme === "dark"
-            ? {
-                ...DarkTheme,
-                colors: {
-                  ...DarkTheme.colors,
-                  card: "#000",
-                },
-              }
-            : DefaultTheme
-        }
-      >
-        <StatusBar style="auto" />
+    <NavigationContainer
+      theme={
+        scheme === "dark"
+          ? {
+              ...DarkTheme,
+              colors: {
+                ...DarkTheme.colors,
+                card: "#000",
+              },
+            }
+          : DefaultTheme
+      }
+    >
+      <StatusBar style="auto" />
 
-        {isWorkingOut ? <WorkoutStack /> : <HomeStack />}
-      </NavigationContainer>
-    </SafeAreaView>
+      {isWorkingOut ? <WorkoutStack /> : <HomeStack />}
+    </NavigationContainer>
   );
 }
 
