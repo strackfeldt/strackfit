@@ -2,7 +2,7 @@ import Feather from "@expo/vector-icons/Feather";
 import React, { useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { Button } from "../components/button";
-import { useLogin } from "../lib/hooks";
+import { useLogin } from "../lib/api";
 
 export function LoginScreen() {
   const { mutate: login } = useLogin();

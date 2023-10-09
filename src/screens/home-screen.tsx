@@ -3,8 +3,8 @@ import { formatDistanceToNow } from "date-fns";
 import * as Haptics from "expo-haptics";
 import React from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import workouts from "../lib/data";
-import { useStartWorkout, useWorkouts } from "../lib/hooks";
+import workouts from "../data";
+import { useStartWorkout, useWorkouts } from "../lib/api";
 
 export function HomeScreen() {
   const { mutate } = useStartWorkout();

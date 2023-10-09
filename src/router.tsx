@@ -6,7 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { Alert, Text, TouchableOpacity, useColorScheme } from "react-native";
 import { useTimer } from "./components/use-timer";
-import { useCancelWorkout, useCurrentUser, useCurrentWorkout, useFinishWorkout } from "./lib/hooks";
+import { useCancelWorkout, useCurrentUser, useCurrentWorkout, useFinishWorkout } from "./lib/api";
 import { HomeScreen } from "./screens/home-screen";
 import { LoginScreen } from "./screens/login-screen";
 import { SettingsScreen } from "./screens/settings-screen";

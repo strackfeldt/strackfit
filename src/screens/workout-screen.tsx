@@ -15,7 +15,7 @@ import {
 import Svg, { Circle } from "react-native-svg";
 import { Button } from "../components/button";
 import { useTimer } from "../components/use-timer";
-import workouts, { Template } from "../lib/data";
+import workouts, { Template } from "../data";
 import {
   isOptimistic,
   useCreateLog,
@@ -23,7 +23,7 @@ import {
   useCurrentWorkout,
   useExercises,
   useLogs,
-} from "../lib/hooks";
+} from "../lib/api";
 
 export function parseValue(value: string) {
   if (value.includes(",")) {
@@ -63,11 +63,6 @@ function Exercise({
     return `${minutes}:${remainingSeconds}`;
   };
 
-  const repDisplay =
-    !exercise.minReps || exercise.minReps === exercise.maxReps
-      ? exercise.maxReps
-      : `${exercise.minReps}-${exercise.maxReps}`;
-
   const restDisplay = !exercise.maxRest
     ? 0
     : !exercise.minRest || exercise.minRest === exercise.maxRest
@@ -99,7 +94,7 @@ function Exercise({
             </View>
 
             <View className="flex-row gap-1">
-              <Text className="font-medium text-white">{repDisplay}</Text>
+              <Text className="font-medium text-white">{exercise.reps}</Text>
               <Text className="text-zinc-400">Reps</Text>
             </View>
 

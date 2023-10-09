@@ -2,7 +2,7 @@ import * as Updates from "expo-updates";
 import React from "react";
 import { Alert, Text, View } from "react-native";
 import { Button } from "../components/button";
-import { useLogout } from "../lib/hooks";
+import { useLogout } from "../lib/api";
 
 export function SettingsScreen() {
   const logout = useLogout();
