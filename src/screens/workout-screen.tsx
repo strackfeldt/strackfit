@@ -1,5 +1,4 @@
 import Feather from "@expo/vector-icons/Feather";
-import clsx from "clsx";
 import { useKeepAwake } from "expo-keep-awake";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -75,28 +74,8 @@ function Exercise({
     ? formatRest(exercise.maxRest)
     : `${formatRest(exercise.minRest)}-${formatRest(exercise.maxRest)}`;
 
-  let supersetIndicator = undefined;
-  let supersetIndicatorTagColor = undefined;
-
-  if (exercise.superset === "a") {
-    supersetIndicator = "border-2 border-teal-700";
-    supersetIndicatorTagColor = "bg-teal-700 text-teal-100";
-  } else if (exercise.superset === "b") {
-    supersetIndicator = "border-2 border-red-500";
-    supersetIndicatorTagColor = "bg-red-700 text-red-100";
-  } else if (exercise.superset === "c") {
-    supersetIndicator = "border-2 border-yellow-500";
-    supersetIndicatorTagColor = "bg-yellow-700 text-yellow-100";
-  } else if (exercise.superset === "d") {
-    supersetIndicator = "border-2 border-blue-500";
-    supersetIndicatorTagColor = "bg-blue-700 text-blue-100";
-  } else if (exercise.superset === "e") {
-    supersetIndicator = "border-2 border-purple-500";
-    supersetIndicatorTagColor = "bg-purple-700 text-purple-100";
-  }
-
   return (
-    <View className={clsx("p-4 bg-black rounded-lg mb-2", supersetIndicator)} key={exercise.id}>
+    <View className="p-4 bg-black rounded-lg mb-2" key={exercise.id}>
       <TouchableOpacity
         onPress={() => {
           setOpen(!open);
@@ -104,18 +83,6 @@ function Exercise({
       >
         <View className="flex-row justify-between items-center">
           <Text className="font-medium text-white text-lg">{exercise.name}</Text>
-          {/* {exercise.superset && (
-              <View className="inline-flex rounded-full overflow-hidden">
-                <Text
-                  className={clsx(
-                    "bg-teal-700 py-0.5 px-2 rounded-full text-[10px] font-medium text-gray-100",
-                    supersetIndicatorTagColor
-                  )}
-                >
-                  Superset
-                </Text>
-              </View>
-            )} */}
           {open ? (
             <Feather name="chevron-down" size={24} color="gray" />
           ) : (
@@ -146,7 +113,7 @@ function Exercise({
                 <Feather name="check" size={20} color="gray" />
               ) : (
                 <Text className="text-zinc-400">
-                  {exercise.logs?.length} / {exercise.sets}
+                  {exercise.logs?.length}/{exercise.sets}
                 </Text>
               )}
             </View>
@@ -370,16 +337,6 @@ function Timer() {
   const soundPlayed = useRef(false);
 
   async function playSound() {
-    // try {
-    //   // await Audio.setAudioModeAsync({
-    //   //   staysActiveInBackground: true,
-    //   // });
-    //   const { sound } = await Audio.Sound.createAsync(require("../src/assets/boxing-bell-cut.mp3"));
-    //   await sound.playAsync();
-    //   await sound.unloadAsync();
-    // } catch (error) {
-    //   console.log(error);
-    // }
     Vibration.vibrate(1000, false);
   }
 
@@ -492,13 +449,12 @@ function ExercisesMissing({
         {templateExercises
           .filter((t) => !serverExercises.find((s) => s.name === t.name))
           .map((t) => (
-            <Text key={t.id} className="text-sm text-white">
+            <Text key={t.name} className="text-sm text-white">
               {t.name}
             </Text>
           ))}
       </View>
       <Button
-        // className="p-2 bg-black rounded-lg flex-row items-center justify-center"
         onPress={() => {
           createMissingExercises({
             templateExercises,

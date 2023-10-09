@@ -1,4 +1,4 @@
-import Updates from "expo-updates";
+import * as Updates from "expo-updates";
 import React from "react";
 import { Alert, Text, View } from "react-native";
 import { Button } from "../components/button";
@@ -35,9 +35,13 @@ export function SettingsScreen() {
       <View>
         <Button
           onPress={() => {
-            Updates.fetchUpdateAsync().then(() => {
-              Updates.reloadAsync();
-            });
+            try {
+              Updates.fetchUpdateAsync().then(() => {
+                Updates.reloadAsync();
+              });
+            } catch (e) {
+              console.log(e);
+            }
           }}
         >
           <Text className="text-white">Update</Text>

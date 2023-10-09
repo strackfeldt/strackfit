@@ -9,7 +9,6 @@ export type Template = {
     maxRest?: number;
     minReps?: number;
     maxReps: number;
-    superset?: "a" | "b" | "c" | "d" | "e";
   }>;
 };
 
@@ -23,8 +22,8 @@ const ULPPL: Template[] = [
       { name: "Handstand Push Up", sets: 3, minRest: 120, maxRest: 180, minReps: 8, maxReps: 10 },
       { name: "DB Row", sets: 3, minRest: 60, maxRest: 120, minReps: 10, maxReps: 12 },
       { name: "Lateral Raise", sets: 3, minRest: 60, maxRest: 120, minReps: 12, maxReps: 15 },
-      { name: "BB Curl", sets: 3, minReps: 12, maxReps: 15, superset: "a" }, //                        Superset
-      { name: "Skullcrusher", sets: 3, maxRest: 60, minReps: 12, maxReps: 15, superset: "a" }, //      Superset
+      { name: "BB Curl", sets: 3, minReps: 12, maxReps: 15 },
+      { name: "Skullcrusher", sets: 3, maxRest: 60, minReps: 12, maxReps: 15 },
       { name: "Hanging Leg Raise", sets: 4, minRest: 60, maxRest: 120, minReps: 15, maxReps: 15 },
     ],
   },

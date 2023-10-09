@@ -1,6 +1,5 @@
 import Feather from "@expo/vector-icons/Feather";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { DarkTheme, DefaultTheme, NavigationContainer } from "@react-navigation/native";
+import { DarkTheme, DefaultTheme, NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import * as Haptics from "expo-haptics";
 import { StatusBar } from "expo-status-bar";
@@ -8,25 +7,35 @@ import React from "react";
 import { Alert, SafeAreaView, Text, TouchableOpacity, useColorScheme } from "react-native";
 import { useTimer } from "./components/use-timer";
 import { useCancelWorkout, useCurrentUser, useCurrentWorkout, useFinishWorkout } from "./lib/hooks";
-import { HistoryScreen } from "./screens/history-screen";
 import { HomeScreen } from "./screens/home-screen";
 import { LoginScreen } from "./screens/login-screen";
 import { SettingsScreen } from "./screens/settings-screen";
 import { WorkoutScreen } from "./screens/workout-screen";
 
-const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 function HomeStack() {
+  const navigation = useNavigation<any>();
   return (
     <Stack.Navigator>
       <Stack.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          headerShown: false,
+          headerRight: ({ tintColor }) => (
+            <TouchableOpacity
+              className="px-6"
+              onPress={() => {
+                navigation.navigate("Settings");
+              }}
+            >
+              <Feather name="settings" size={20} color={tintColor} />
+            </TouchableOpacity>
+          ),
         }}
       />
+
+      <Stack.Screen name="Settings" component={SettingsScreen} />
     </Stack.Navigator>
   );
 }
@@ -115,48 +124,7 @@ function AppRouter() {
       >
         <StatusBar style="auto" />
 
-        {isWorkingOut ? (
-          <WorkoutStack />
-        ) : (
-          <Tab.Navigator
-            screenOptions={{
-              tabBarActiveTintColor: "#14b8a6",
-              lazy: false,
-              headerShown: false,
-            }}
-          >
-            <Tab.Screen
-              name="HomeStack"
-              component={HomeStack}
-              options={{
-                // headerShown: false,
-                tabBarLabel: "Home",
-                tabBarIcon: ({ color, size }) => <Feather name="home" color={color} size={size} />,
-              }}
-            />
-            <Tab.Screen
-              name="History"
-              component={HistoryScreen}
-              options={{
-                tabBarIcon: ({ color, size }) => <Feather name="calendar" color={color} size={size} />,
-              }}
-            />
-            {/* <Tab.Screen
-              name="Stats"
-              component={StatsScreen}
-              options={{
-                tabBarIcon: ({ color, size }) => <Feather name="activity" color={color} size={size} />,
-              }}
-            /> */}
-            <Tab.Screen
-              name="Settings"
-              component={SettingsScreen}
-              options={{
-                tabBarIcon: ({ color, size }) => <Feather name="settings" color={color} size={size} />,
-              }}
-            />
-          </Tab.Navigator>
-        )}
+        {isWorkingOut ? <WorkoutStack /> : <HomeStack />}
       </NavigationContainer>
     </SafeAreaView>
   );

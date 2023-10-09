@@ -12,14 +12,13 @@ export function HomeScreen() {
   const { data } = useWorkouts();
 
   return (
-    <View className="flex-1 bg-zinc-800 p-2  flex-row flex-wrap">
+    <View className="flex-1 bg-zinc-800 p-2">
       {workouts.map((workout) => {
         const lastPerformed = data?.find((w) => w.template_id === workout.id)?.started_at;
 
         return (
-          <View key={workout.id} className="w-1/2 p-2">
+          <View key={workout.id} className="p-2">
             <TouchableOpacity
-              className="p-4 bg-black rounded-lg h-32"
               key={workout.id}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -38,20 +37,25 @@ export function HomeScreen() {
                 ]);
               }}
             >
-              <Text className="text-white font-medium">{workout.name}</Text>
-              <Text numberOfLines={3} className="text-xs text-zinc-400 mt-2">
-                {workout.exercises.map((ex) => ex.name).join(", ")}
-              </Text>
+              <View className="p-4 bg-black rounded-lg h-36 flex-row items-center space-x-6">
+                <View className="flex-1">
+                  <Text className="text-white font-medium">{workout.name}</Text>
+                  <Text numberOfLines={3} className="text-xs text-zinc-400 mt-2">
+                    {workout.exercises.map((ex) => ex.name).join(", ")}
+                  </Text>
 
-              <View className="flex-row items-center gap-1.5 mt-auto">
-                <Feather name="clock" size={16} color="gray" />
-                <Text className="text-xs text-zinc-400">
-                  {lastPerformed
-                    ? formatDistanceToNow(new Date(lastPerformed), {
-                        addSuffix: true,
-                      }).replace("about", "")
-                    : "Never"}
-                </Text>
+                  <View className="flex-row items-center gap-1.5 mt-auto">
+                    <Feather name="clock" size={16} color="gray" />
+                    <Text className="text-xs text-zinc-400">
+                      {lastPerformed
+                        ? formatDistanceToNow(new Date(lastPerformed), {
+                            addSuffix: true,
+                          }).replace("about", "")
+                        : "Never"}
+                    </Text>
+                  </View>
+                </View>
+                <Feather name="chevron-right" size={16} color="gray" />
               </View>
             </TouchableOpacity>
           </View>
