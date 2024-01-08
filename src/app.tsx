@@ -1,7 +1,7 @@
 import { focusManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Notifications from "expo-notifications";
 import React, { useEffect } from "react";
-import { AppState, AppStateStatus, KeyboardAvoidingView } from "react-native";
+import { AppState, AppStateStatus, KeyboardAvoidingView, SafeAreaView } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthedRouter } from "./router";
 
@@ -51,12 +51,14 @@ export default function App() {
   }, []);
 
   return (
-    <GestureHandlerRootView className="flex-1">
-      <QueryClientProvider client={qc}>
-        <KeyboardAvoidingView className="flex-1 bg-black" behavior="padding" enabled>
-          <AuthedRouter />
-        </KeyboardAvoidingView>
-      </QueryClientProvider>
-    </GestureHandlerRootView>
+    <QueryClientProvider client={qc}>
+      <SafeAreaView className="flex-1 bg-black">
+        <GestureHandlerRootView className="flex-1">
+          <KeyboardAvoidingView className="flex-1 bg-black" behavior="padding" enabled>
+            <AuthedRouter />
+          </KeyboardAvoidingView>
+        </GestureHandlerRootView>
+      </SafeAreaView>
+    </QueryClientProvider>
   );
 }

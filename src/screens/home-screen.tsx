@@ -4,10 +4,9 @@ import { formatDistanceToNow } from "date-fns";
 import * as Haptics from "expo-haptics";
 import React from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useWorkoutActions } from "../components/workout-store";
 import { useWorkouts } from "../lib/api";
 import workouts from "../lib/data";
-import { useWorkoutActions } from "../lib/workout-store";
-import { WorkoutSheet } from "./workout-screen";
 
 export function HomeScreen() {
   const { start } = useWorkoutActions();
@@ -73,8 +72,6 @@ export function HomeScreen() {
           );
         })}
       </ScrollView>
-
-      <WorkoutSheet />
     </View>
   );
 }

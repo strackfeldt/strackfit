@@ -5,9 +5,9 @@ import { useKeepAwake } from "expo-keep-awake";
 import React, { useState } from "react";
 import { Alert, Button as NButton, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Button } from "../components/button";
+import { useCurrentWorkout, useCurrentWorkoutLogs, useWorkoutActions } from "../components/workout-store";
 import { useCreateMissingExercises, useExercises, useLogs, usePreviousWorkout } from "../lib/api";
 import workouts, { Template } from "../lib/data";
-import { useCurrentWorkout, useCurrentWorkoutLogs, useWorkoutActions } from "../lib/workout-store";
 
 export function WorkoutSheet() {
   const currentWorkout = useCurrentWorkout();
@@ -29,6 +29,14 @@ export function WorkoutSheet() {
       <WorkoutScreen currentWorkout={currentWorkout} />
     </BottomSheet>
   );
+}
+
+export function WorkoutPage() {
+  const currentWorkout = useCurrentWorkout();
+
+  if (!currentWorkout) return null;
+
+  return <WorkoutScreen currentWorkout={currentWorkout} />;
 }
 
 export function WorkoutScreen({
@@ -68,7 +76,7 @@ export function WorkoutScreen({
           return {
             ...exercise,
             id: exerciseData?.id,
-            logs: currentWorkout.logs.filter((log) => log.exerciseId === exerciseData.id),
+            logs: currentWorkout.logs?.filter((log) => log.exerciseId === exerciseData.id) ?? [],
             previousLogs: [],
           };
         })
@@ -78,16 +86,13 @@ export function WorkoutScreen({
   };
 
   return (
-    <View className="flex-1 pt-2">
+    <>
+      <View className="p-4 pt-0 border-b border-zinc-800">
+        <Text className="text-2xl font-bold text-white">{currentWorkout.name}</Text>
+      </View>
       <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
-        <View className="mb-4 px-4">
-          <Text className="text-2xl font-bold text-white">{currentWorkout.name}</Text>
-        </View>
-
         <View className="p-4">
-          {templateWithExercises?.exercises.map((exercise, index) => {
-            // if (index !== 0) return null;
-
+          {templateWithExercises?.exercises.map((exercise) => {
             return <Exercise currentWorkout={currentWorkout} exercise={exercise} key={exercise.id} />;
           })}
         </View>
@@ -130,7 +135,7 @@ export function WorkoutScreen({
           />
         </View>
       </ScrollView>
-    </View>
+    </>
   );
 }
 
@@ -254,21 +259,21 @@ function SetDataInput({
   return (
     <>
       <View className={clsx("flex-row justify-between mt-2", disabled && "")}>
-        <View className="flex-row items-center w-8 justify-center">
+        <View className="flex-row items-center justify-center w-8">
           {set.type === "warmup" ? (
             <Feather name="wind" size={10} color="orange" />
           ) : set.type === "dropset" ? (
             <Feather name="corner-down-left" size={10} color="indigo" />
           ) : (
-            <Text className="text-[10px] font-bold text-white">{setNr}</Text>
+            <Text className="text-xs font-bold text-white">{setNr}</Text>
           )}
         </View>
 
-        <View className="w-8">
-          <Text className="text-xs text-[10px] font-bold text-center text-white">{set.reps}</Text>
+        <View className="flex-row items-center justify-center w-8">
+          <Text className="text-xs font-bold text-center text-white">{set.reps}</Text>
         </View>
 
-        <View className="w-16">
+        <View className="flex-row justify-center items-center w-16">
           {previousLog ? (
             <TouchableOpacity
               activeOpacity={0.9}
@@ -278,47 +283,44 @@ function SetDataInput({
                 setReps(previousLog.reps.toString());
               }}
             >
-              <Text className="text-xs text-[10px] font-bold text-center text-white">
+              <Text className="text-xs font-bold text-white">
                 {previousLog.reps}x{previousLog.weight}kg
               </Text>
             </TouchableOpacity>
           ) : (
-            <Text className="text-[10px] font-bold text-center text-white">-</Text>
+            <Text className="text-xs font-bold text-white">-</Text>
           )}
         </View>
 
-        <View className="w-10 items-center justify-center">
+        <View className="flex-row items-center justify-center w-10">
           {disabled ? (
-            <Text className="text-[10px] font-bold text-center text-white">-</Text>
+            <Text className="text-xs font-bold text-center text-white">-</Text>
           ) : (
             <TextInput
               value={weight}
               onChangeText={limitLength(setWeight)}
               keyboardType="numeric"
-              className="w-10 h-4 -m-1 text-[10px] font-bold rounded bg-zinc-800 text-center text-white"
+              className="w-10 h-5 text-[10px] font-bold rounded bg-zinc-800 text-center text-white"
             />
           )}
         </View>
-        <View className="w-10 items-center justify-center">
+        <View className="flex-row items-center justify-center w-10">
           {disabled ? (
-            <Text className="text-[10px] font-bold text-center text-white">-</Text>
+            <Text className="text-xs font-bold text-center text-white">-</Text>
           ) : (
             <TextInput
               value={reps}
               onChangeText={limitLength(setReps)}
               keyboardType="numeric"
-              className="w-10 h-4 -m-1 text-[10px] font-bold rounded bg-zinc-800  text-center text-white"
+              className="w-10 h-5 text-[10px] font-bold rounded bg-zinc-800  text-center text-white"
             />
           )}
         </View>
 
-        <View className="w-4 items-center justify-center">
+        <View className="flex-row items-center justify-center w-4">
           {(!currentLog || currentLog.weight !== parseValue(weight) || currentLog.reps !== parseInt(reps)) && (
             <TouchableOpacity
-              className={clsx(
-                "w-4 h-4 -m-1 rounded bg-zinc-800 flex items-center justify-center",
-                disabled && "opacity-50"
-              )}
+              className={clsx("w-5 h-5 rounded bg-zinc-800 flex items-center justify-center", disabled && "opacity-50")}
               onPress={() => {
                 if (!weight || !reps) return;
 

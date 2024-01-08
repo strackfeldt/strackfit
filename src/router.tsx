@@ -4,10 +4,12 @@ import { DarkTheme, DefaultTheme, NavigationContainer } from "@react-navigation/
 import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { useColorScheme } from "react-native";
+import { useCurrentWorkout } from "./components/workout-store";
 import { useCurrentUser } from "./lib/api";
 import { HomeScreen } from "./screens/home-screen";
 import { LoginScreen } from "./screens/login-screen";
 import { SettingsScreen } from "./screens/settings-screen";
+import { WorkoutPage } from "./screens/workout-screen";
 
 const Tabs = createBottomTabNavigator();
 
@@ -15,7 +17,8 @@ function HomeStack() {
   return (
     <Tabs.Navigator
       screenOptions={{
-        tabBarShowLabel: false,
+        // tabBarShowLabel: false,
+        headerShown: false,
       }}
     >
       <Tabs.Screen
@@ -92,9 +95,14 @@ function HomeStack() {
 export function AuthedRouter() {
   const user = useCurrentUser();
   const scheme = useColorScheme();
+  const currentWorkout = useCurrentWorkout();
 
   if (!user) {
     return <LoginScreen />;
+  }
+
+  if (currentWorkout) {
+    return <WorkoutPage />;
   }
 
   return (

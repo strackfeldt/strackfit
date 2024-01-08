@@ -15,6 +15,9 @@
       "channel": "preview",
       "ios": {
         "resourceClass": "m1-medium"
+      },
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "https://strackfit.timostrackfeldt.com/"
       }
     },
     "production": {
