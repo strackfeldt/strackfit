@@ -61,6 +61,6 @@ class AsyncAuthStore extends BaseAuthStore {
   }
 }
 
-export const pb = new PocketBase("https://strackfit.timostrackfeldt.com/", new AsyncAuthStore(), "de");
+export const pb = new PocketBase(process.env.EXPO_PUBLIC_BACKEND_URL, new AsyncAuthStore(), "de");
 
 pb.autoCancellation(false);

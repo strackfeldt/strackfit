@@ -1,481 +1,50 @@
 import Feather from "@expo/vector-icons/Feather";
+import BottomSheet, { BottomSheetBackdrop } from "@gorhom/bottom-sheet";
+import clsx from "clsx";
 import { useKeepAwake } from "expo-keep-awake";
-import React, { useEffect, useRef, useState } from "react";
-import {
-  Modal,
-  RefreshControl,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Vibration,
-  View,
-  useColorScheme,
-} from "react-native";
-import Svg, { Circle } from "react-native-svg";
+import React, { useState } from "react";
+import { Alert, Button as NButton, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Button } from "../components/button";
-import { useTimer } from "../components/use-timer";
-import workouts, { Template } from "../data";
-import {
-  isOptimistic,
-  useCreateLog,
-  useCreateMissingExercises,
-  useCurrentWorkout,
-  useExercises,
-  useLogs,
-} from "../lib/api";
+import { useCreateMissingExercises, useExercises, useLogs, usePreviousWorkout } from "../lib/api";
+import workouts, { Template } from "../lib/data";
+import { useCurrentWorkout, useCurrentWorkoutLogs, useWorkoutActions } from "../lib/workout-store";
 
-export function parseValue(value: string) {
-  if (value.includes(",")) {
-    const clean = value.replace(",", ".");
+export function WorkoutSheet() {
+  const currentWorkout = useCurrentWorkout();
 
-    return parseFloat(clean);
-  }
+  if (!currentWorkout) return null;
 
-  return parseInt(value);
+  return (
+    <BottomSheet
+      index={1}
+      snapPoints={[80, "98%"]}
+      backgroundStyle={{
+        backgroundColor: "black",
+      }}
+      handleIndicatorStyle={{
+        backgroundColor: "rgb(161 161 170)",
+      }}
+      backdropComponent={(props) => <BottomSheetBackdrop {...props} appearsOnIndex={1} />}
+    >
+      <WorkoutScreen currentWorkout={currentWorkout} />
+    </BottomSheet>
+  );
 }
 
-function Exercise({
-  currentWorkoutId,
-  exercise,
+export function WorkoutScreen({
+  currentWorkout,
 }: {
-  currentWorkoutId: string;
-  exercise: Omit<Template["exercises"][number], "id"> & { id: string; logs: any[] };
+  currentWorkout: Exclude<ReturnType<typeof useCurrentWorkout>, null>;
 }) {
-  const { mutate } = useCreateLog();
-
-  const [open, setOpen] = useState(false);
-
-  const allDone = exercise.logs.length >= exercise.sets;
-
-  const [weight, setWeight] = useState("");
-  const [reps, setReps] = useState("");
-  const [rpe, setRpe] = useState("");
-
-  const formatRest = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-
-    if (remainingSeconds === 0) return `${minutes}`;
-
-    if (remainingSeconds < 10) return `${minutes}:0${remainingSeconds}`;
-
-    return `${minutes}:${remainingSeconds}`;
-  };
-
-  const restDisplay = !exercise.rest
-    ? 0
-    : !exercise.minRest || exercise.minRest === exercise.rest
-    ? formatRest(exercise.rest)
-    : `${formatRest(exercise.minRest)}-${formatRest(exercise.rest)}`;
-
-  return (
-    <View className="p-4 bg-black rounded-lg mb-2" key={exercise.id}>
-      <TouchableOpacity
-        onPress={() => {
-          setOpen(!open);
-        }}
-      >
-        <View className="flex-row justify-between items-center">
-          <Text className="font-medium text-white text-lg">{exercise.name}</Text>
-          {open ? (
-            <Feather name="chevron-down" size={24} color="gray" />
-          ) : (
-            <Feather name="chevron-right" size={24} color="gray" />
-          )}
-        </View>
-      </TouchableOpacity>
-      {open && (
-        <>
-          <View className="flex-row justify-between items-center mt-3">
-            <View className="flex-row gap-1">
-              <Text className="font-medium text-white">{exercise.sets}</Text>
-              <Text className="text-zinc-400">Sets</Text>
-            </View>
-
-            <View className="flex-row gap-1">
-              <Text className="font-medium text-white">{exercise.reps}</Text>
-              <Text className="text-zinc-400">Reps</Text>
-            </View>
-
-            <View className="flex-row gap-1">
-              <Text className="font-medium text-white">{restDisplay}</Text>
-              <Text className="text-zinc-400">Rest</Text>
-            </View>
-
-            <View>
-              {allDone ? (
-                <Feather name="check" size={20} color="gray" />
-              ) : (
-                <Text className="text-zinc-400">
-                  {exercise.logs?.length}/{exercise.sets}
-                </Text>
-              )}
-            </View>
-          </View>
-
-          <View className="mt-4">
-            {exercise.logs?.map((log, index) => (
-              <View className={`flex-row justify-between ${isOptimistic(log) ? "opacity-40" : ""}`} key={log.id}>
-                <View className="flex-row gap-2 items-center">
-                  <Text className="text-zinc-400">#</Text>
-                  <Text className="font-medium text-white">{index + 1}</Text>
-                </View>
-                <View className="flex-row gap-2 items-center">
-                  <Text className="text-zinc-400">Reps</Text>
-                  <Text className="font-medium text-white w-10 text-center">{log.reps}</Text>
-                </View>
-                <View className="flex-row gap-2 items-center">
-                  <Text className="text-zinc-400">Weight</Text>
-                  <Text className="font-medium text-white w-10 text-center">{log.weight}</Text>
-                </View>
-                <View className="flex-row gap-2 items-center">
-                  <Text className="text-zinc-400">RPE</Text>
-                  <Text className="font-medium text-white w-10 text-center">{log.rpe}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-
-          {!allDone && (
-            <View>
-              <View className="flex-row items-center justify-between mt-2">
-                <View className="flex-row gap-2 items-center">
-                  <Text className="text-zinc-400">#</Text>
-                  <Text className="font-medium text-white">{exercise.logs.length + 1}</Text>
-                </View>
-
-                <View className="flex-row items-center gap-2">
-                  <Text className="text-white">Reps</Text>
-                  <TextInput
-                    keyboardType="number-pad"
-                    className="rounded-lg p-1 w-10 text-center bg-zinc-800 text-white"
-                    value={reps}
-                    onChangeText={setReps}
-                  />
-                </View>
-
-                <View className="flex-row items-center gap-2">
-                  <Text className="text-white">Weight</Text>
-                  <TextInput
-                    keyboardType="numeric"
-                    className="rounded-lg p-1 w-10 text-center bg-zinc-800 text-white"
-                    value={weight}
-                    onChangeText={setWeight}
-                  />
-                </View>
-
-                <View className="flex-row items-center gap-2">
-                  <Text className="text-white">RPE</Text>
-                  <TextInput
-                    keyboardType="numeric"
-                    className="rounded-lg p-1 w-10 text-center bg-zinc-800 text-white"
-                    value={rpe}
-                    onChangeText={setRpe}
-                  />
-                </View>
-              </View>
-
-              <View className="mt-8">
-                <Button
-                  onPress={() => {
-                    if (!weight || !reps || !rpe) return;
-
-                    if (exercise.rest) {
-                      useTimer.getState().start(exercise.rest, exercise.minRest);
-                    }
-
-                    mutate(
-                      {
-                        exerciseId: exercise.id,
-                        workoutId: currentWorkoutId,
-                        reps: parseInt(reps),
-                        weight: parseValue(weight),
-                        rpe: parseValue(rpe),
-                      },
-
-                      {
-                        onError: () => {
-                          useTimer.getState().stop();
-                        },
-                        onSuccess: () => {
-                          setWeight("");
-                          setReps("");
-                          setRpe("");
-                        },
-                      }
-                    );
-                  }}
-                >
-                  <Feather name="plus" size={20} color="gray" />
-                  <Text className="text-white">Add Set</Text>
-                </Button>
-              </View>
-            </View>
-          )}
-        </>
-      )}
-    </View>
-  );
-}
-function WorkoutInfo({ workout }: { workout: any }) {
-  const [timeInSeconds, setTimeInSeconds] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const startedAt = new Date(workout.started_at);
-
-      setTimeInSeconds(Math.floor((new Date().getTime() - startedAt.getTime()) / 1000));
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const hoursSinceStart = Math.floor(timeInSeconds / 3600);
-  const minutesSinceStart = Math.floor((timeInSeconds % 3600) / 60);
-  const secondsSinceStart = Math.floor(timeInSeconds % 60);
-
-  const timers = [10, 60, 120, 180];
-
-  function formatMinutes(seconds: number) {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-
-    return `${minutes}:${remainingSeconds < 10 ? `0${remainingSeconds}` : remainingSeconds}`;
-  }
-
-  return (
-    <View className="px-4 pt-3 pb-4 border-b border-zinc-700">
-      <View className="flex-row items-center justify-between">
-        <View>
-          <Text className="text-2xl text-white font-bold">{workout.name}</Text>
-          <Text className="font-medium text-xs text-zinc-300">
-            {hoursSinceStart > 0 && `${hoursSinceStart}:`}
-            {minutesSinceStart < 10 ? `0${minutesSinceStart}` : minutesSinceStart}:
-            {secondsSinceStart < 10 ? `0${secondsSinceStart}` : secondsSinceStart}
-          </Text>
-        </View>
-
-        <Timer />
-      </View>
-
-      <View className="flex-row items-center justify-between gap-4 mt-2">
-        {timers.map((timer) => (
-          <TouchableOpacity
-            key={timer}
-            className="p-2 bg-black flex-1 rounded-lg flex-row items-center justify-center"
-            onPress={() => {
-              useTimer.getState().start(timer);
-            }}
-          >
-            <Feather name="play" size={12} color="gray" />
-            <Text className="ml-0.5 text-zinc-300 font-medium">{formatMinutes(timer)}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-  );
-}
-function CircularProgressBar({
-  currentTime,
-  maxLength,
-  minLength,
-}: {
-  currentTime: number;
-  maxLength: number;
-  minLength: number | null;
-}) {
-  const progress = !currentTime ? 0 : (currentTime / maxLength) * 100;
-  const scheme = useColorScheme();
-
-  const size = 200;
-  const center = size / 2;
-  const radius = center - 10;
-  const dashArray = 2 * Math.PI * radius;
-  const dashOffset = dashArray * ((100 - progress) / 100);
-  const done = progress >= 100;
-
-  return (
-    <View>
-      <Svg height={size} width={size} className="rotate-180">
-        <Circle
-          cx={center}
-          cy={center}
-          fill="transparent"
-          r={radius}
-          stroke={done ? "#22c55e" : scheme === "dark" ? "#444" : "#ddd"}
-          strokeWidth={10}
-        />
-        {!done && (
-          <Circle
-            cx={center}
-            cy={center}
-            fill="transparent"
-            r={radius}
-            stroke={minLength && currentTime > minLength ? "#eab308" : "#14b8a6"}
-            strokeWidth={10}
-            strokeDasharray={dashArray}
-            strokeDashoffset={dashOffset}
-            strokeLinecap="round"
-          />
-        )}
-      </Svg>
-    </View>
-  );
-}
-function Timer() {
-  const { timer, maxLength, minLength } = useTimer();
-
-  const [modalVisible, setModalVisible] = useState(false);
-  const [timeInSeconds, setTimeInSeconds] = useState(0);
-
-  const soundPlayed = useRef(false);
-
-  async function playSound() {
-    Vibration.vibrate(1000, false);
-  }
-
-  useEffect(() => {
-    if (!timer) {
-      return;
-    }
-
-    setModalVisible(true);
-    soundPlayed.current = false;
-
-    const interval = setInterval(() => {
-      const newTime = Math.floor((new Date().getTime() - timer.getTime()) / 1000);
-
-      if (!soundPlayed.current && maxLength && newTime === maxLength) {
-        soundPlayed.current = true;
-        playSound();
-      }
-
-      setTimeInSeconds(newTime);
-    }, 100);
-
-    return () => {
-      setTimeInSeconds(0);
-      clearInterval(interval);
-    };
-  }, [timer]);
-
-  const hoursSinceStart = Math.floor(timeInSeconds / 3600);
-  const minutesSinceStart = Math.floor((timeInSeconds % 3600) / 60);
-  const secondsSinceStart = Math.floor(timeInSeconds % 60);
-
-  if (!timer || !maxLength) return null;
-
-  return (
-    <>
-      <Button
-        onPress={() => {
-          setModalVisible(true);
-        }}
-      >
-        <Text className="font-medium text-zinc-300">
-          {hoursSinceStart > 0 && `${hoursSinceStart}:`}
-          {minutesSinceStart < 10 ? `0${minutesSinceStart}` : minutesSinceStart}:
-          {secondsSinceStart < 10 ? `0${secondsSinceStart}` : secondsSinceStart}
-        </Text>
-      </Button>
-
-      <Modal
-        animationType="none"
-        transparent
-        visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(false);
-        }}
-      >
-        <View className="flex-1 justify-end items-center bg-zinc-700/40">
-          <View className="rounded-t-2xl p-4 bg-black w-full">
-            <View className="flex-row justify-end">
-              <Button
-                onPress={() => {
-                  setModalVisible(false);
-                }}
-              >
-                <Feather name="x" size={20} color="gray" />
-              </Button>
-            </View>
-
-            <View className="items-center justify-center h-72">
-              <Text className="font-medium text-2xl text-zinc-300 absolute">
-                {hoursSinceStart > 0 && `${hoursSinceStart}:`}
-                {minutesSinceStart < 10 ? `0${minutesSinceStart}` : minutesSinceStart}:
-                {secondsSinceStart < 10 ? `0${secondsSinceStart}` : secondsSinceStart}
-              </Text>
-
-              <CircularProgressBar currentTime={timeInSeconds} maxLength={maxLength} minLength={minLength} />
-            </View>
-
-            <View className="mb-8">
-              <Button
-                // className="p-2 rounded-lg flex-row items-center justify-center gap-1 mt-4 bg-zinc-800"
-                onPress={() => {
-                  setModalVisible(false);
-                  useTimer.getState().stop();
-                }}
-              >
-                <Feather name="square" size={20} color="gray" />
-                <Text className="text-white">Stop Timer</Text>
-              </Button>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </>
-  );
-}
-function ExercisesMissing({
-  templateExercises,
-  serverExercises,
-}: {
-  templateExercises: any[];
-  serverExercises: any[];
-}) {
-  const { mutate: createMissingExercises } = useCreateMissingExercises();
-
-  return (
-    <View className="flex-1 justify-center items-center bg-zinc-800">
-      <Text className="text-lg font-bold mb-2 text-white">Some exercises are missing</Text>
-      <View className="mb-4">
-        {templateExercises
-          .filter((t) => !serverExercises.find((s) => s.name === t.name))
-          .map((t) => (
-            <Text key={t.name} className="text-sm text-white">
-              {t.name}
-            </Text>
-          ))}
-      </View>
-      <Button
-        onPress={() => {
-          createMissingExercises({
-            templateExercises,
-            serverExercises,
-          });
-        }}
-      >
-        <Feather name="plus" size={20} color="gray" />
-        <Text className="text-white">Add Exercises</Text>
-      </Button>
-    </View>
-  );
-}
-export function WorkoutScreen() {
   useKeepAwake();
-
-  const [isRefetching, setIsRefetching] = useState(false);
 
   const { data: exercises } = useExercises();
 
-  const { data: currentWorkout, refetch: refetchWorkout } = useCurrentWorkout();
-  const { data: logs = [], refetch: refetchLogs } = useLogs(currentWorkout?.id!, { enabled: !!currentWorkout });
+  const { stop, finish } = useWorkoutActions();
 
-  const template = workouts.find((w) => w.id === currentWorkout?.template_id);
+  const template = workouts.find((w) => w.id === currentWorkout?.templateId);
 
-  if (!currentWorkout || !exercises || !template) {
+  if (!exercises || !template) {
     return null;
   }
 
@@ -493,47 +62,340 @@ export function WorkoutScreen() {
       template?.exercises
         .map((exercise) => {
           const exerciseData = exercises?.find((e) => e.name === exercise.name);
-          const exerciseLogs = logs.filter((l) => l.exercise === exerciseData?.id);
 
           if (!exerciseData) return null;
 
           return {
             ...exercise,
             id: exerciseData?.id,
-            logs: exerciseLogs ?? [],
+            logs: currentWorkout.logs.filter((log) => log.exerciseId === exerciseData.id),
+            previousLogs: [],
           };
         })
-        .filter(Boolean) ?? [],
+        .filter((exercise): exercise is Exclude<typeof exercise, null> => {
+          return !!exercise;
+        }) ?? [],
   };
 
   return (
-    <View className="flex-1 bg-zinc-800">
-      <WorkoutInfo workout={currentWorkout} />
+    <View className="flex-1 pt-2">
+      <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
+        <View className="mb-4 px-4">
+          <Text className="text-2xl font-bold text-white">{currentWorkout.name}</Text>
+        </View>
 
-      <ScrollView
-        className="flex-1"
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={async () => {
-              setIsRefetching(true);
-
-              await refetchWorkout();
-              await refetchLogs();
-
-              setIsRefetching(false);
-            }}
-          />
-        }
-      >
         <View className="p-4">
-          {templateWithExercises?.exercises.map((exercise) => {
-            return <Exercise currentWorkoutId={currentWorkout.id} exercise={exercise!} key={exercise!.id} />;
+          {templateWithExercises?.exercises.map((exercise, index) => {
+            // if (index !== 0) return null;
+
+            return <Exercise currentWorkout={currentWorkout} exercise={exercise} key={exercise.id} />;
           })}
+        </View>
+
+        <View className="gap-y-4 p-4">
+          <NButton
+            onPress={() => {
+              Alert.alert("Are you sure?", "This will cancel the workout", [
+                {
+                  text: "Cancel",
+                  style: "cancel",
+                },
+                {
+                  text: "OK",
+                  onPress: () => {
+                    stop();
+                  },
+                },
+              ]);
+            }}
+            title="Cancel Workout"
+            color="red"
+          />
+          <NButton
+            onPress={() => {
+              Alert.alert("Are you sure?", "This will finish the workout", [
+                {
+                  text: "Cancel",
+                  style: "cancel",
+                },
+                {
+                  text: "OK",
+                  onPress: () => {
+                    finish();
+                  },
+                },
+              ]);
+            }}
+            title="Finish Workout"
+          />
         </View>
       </ScrollView>
     </View>
   );
+}
+
+function Exercise({
+  exercise,
+  currentWorkout,
+}: {
+  exercise: Omit<Template["exercises"][number], "id"> & { id: string; logs: any[]; previousLogs: any[] };
+  currentWorkout: Exclude<ReturnType<typeof useCurrentWorkout>, null>;
+}) {
+  const allDone = exercise.logs.length >= exercise.sets.length;
+
+  return (
+    <View className="mb-2 bg-zinc-900/20 rounded-lg p-2" key={exercise.id}>
+      <View className="flex-row items-center justify-between">
+        <Text className="text-sm font-medium text-white">{exercise.name}</Text>
+      </View>
+
+      {currentWorkout.users?.map((user, index) => {
+        return (
+          <View className={index === 0 ? "mt-6" : "mt-12 mb-4"} key={user.id}>
+            <UserLogs exercise={exercise} user={user} currentWorkout={currentWorkout} />
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+function UserLogs({
+  exercise,
+  user,
+  currentWorkout,
+}: {
+  exercise: {
+    id: string;
+    sets: any[];
+  };
+  user: any;
+  currentWorkout: Exclude<ReturnType<typeof useCurrentWorkout>, null>;
+}) {
+  const previousWorkout = usePreviousWorkout(user.id);
+
+  const logs = useCurrentWorkoutLogs(user.id);
+
+  const prevlogs = useLogs(previousWorkout?.data?.id!, {
+    enabled: !!previousWorkout?.data,
+  });
+
+  return (
+    <>
+      <View className="flex-row justify-between items-center mt-2 mb-1 border-b border-zinc-800 pb-2">
+        <View className="bg-zinc-700 p-px rounded">
+          <Text className="text-white w-8 text-[10px] text-center font-medium">{user.name}</Text>
+        </View>
+        <Text className="text-white w-8 text-[10px] text-center font-medium">Target</Text>
+        <Text className="text-white w-16 text-[10px] text-center font-medium">Prev</Text>
+        <Text className="text-white w-10 text-[10px] text-center font-medium">KG</Text>
+        <Text className="text-white w-10 text-[10px] text-center font-medium">Reps</Text>
+        <Text className="text-white w-4 text-[10px] text-center font-medium">
+          <Feather name="check" size={12} />
+        </Text>
+      </View>
+
+      {exercise.sets.map((set, index) => {
+        const previousLog = prevlogs.data?.find((log) => log.exercise === exercise.id && log.set_nr === index + 1);
+        const currentLog = logs?.find((log) => log.exercise === exercise.id && log.set_nr === index + 1);
+
+        const disabled = !currentLog && index !== logs?.filter((l) => l.exercise === exercise.id).length;
+
+        return (
+          <SetDataInput
+            setNr={index + 1}
+            disabled={disabled}
+            key={index}
+            set={set}
+            userId={user.id}
+            exerciseId={exercise.id}
+            currentWorkoutId={currentWorkout.templateId}
+            currentLog={currentLog}
+            previousLog={previousLog}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+function SetDataInput({
+  disabled,
+  set,
+  currentLog,
+  previousLog,
+  userId,
+  exerciseId,
+  currentWorkoutId,
+  setNr,
+}: {
+  disabled?: boolean;
+  set: any;
+  currentLog?: any;
+  previousLog: any;
+  exerciseId: string;
+  currentWorkoutId: string;
+  userId: string;
+  setNr: number;
+}) {
+  const { addLog } = useWorkoutActions();
+
+  const [weight, setWeight] = useState("");
+  const [reps, setReps] = useState("");
+
+  function limitLength(setter: any) {
+    return (text: string) => {
+      if (text.length > 6) return;
+
+      setter(text);
+    };
+  }
+
+  return (
+    <>
+      <View className={clsx("flex-row justify-between mt-2", disabled && "")}>
+        <View className="flex-row items-center w-8 justify-center">
+          {set.type === "warmup" ? (
+            <Feather name="wind" size={10} color="orange" />
+          ) : set.type === "dropset" ? (
+            <Feather name="corner-down-left" size={10} color="indigo" />
+          ) : (
+            <Text className="text-[10px] font-bold text-white">{setNr}</Text>
+          )}
+        </View>
+
+        <View className="w-8">
+          <Text className="text-xs text-[10px] font-bold text-center text-white">{set.reps}</Text>
+        </View>
+
+        <View className="w-16">
+          {previousLog ? (
+            <TouchableOpacity
+              activeOpacity={0.9}
+              disabled={disabled}
+              onPress={() => {
+                setWeight(previousLog.weight.toString());
+                setReps(previousLog.reps.toString());
+              }}
+            >
+              <Text className="text-xs text-[10px] font-bold text-center text-white">
+                {previousLog.reps}x{previousLog.weight}kg
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <Text className="text-[10px] font-bold text-center text-white">-</Text>
+          )}
+        </View>
+
+        <View className="w-10 items-center justify-center">
+          {disabled ? (
+            <Text className="text-[10px] font-bold text-center text-white">-</Text>
+          ) : (
+            <TextInput
+              value={weight}
+              onChangeText={limitLength(setWeight)}
+              keyboardType="numeric"
+              className="w-10 h-4 -m-1 text-[10px] font-bold rounded bg-zinc-800 text-center text-white"
+            />
+          )}
+        </View>
+        <View className="w-10 items-center justify-center">
+          {disabled ? (
+            <Text className="text-[10px] font-bold text-center text-white">-</Text>
+          ) : (
+            <TextInput
+              value={reps}
+              onChangeText={limitLength(setReps)}
+              keyboardType="numeric"
+              className="w-10 h-4 -m-1 text-[10px] font-bold rounded bg-zinc-800  text-center text-white"
+            />
+          )}
+        </View>
+
+        <View className="w-4 items-center justify-center">
+          {(!currentLog || currentLog.weight !== parseValue(weight) || currentLog.reps !== parseInt(reps)) && (
+            <TouchableOpacity
+              className={clsx(
+                "w-4 h-4 -m-1 rounded bg-zinc-800 flex items-center justify-center",
+                disabled && "opacity-50"
+              )}
+              onPress={() => {
+                if (!weight || !reps) return;
+
+                // console.log("add log", {
+                //   userId: userId,
+                //   set_nr: setNr,
+                //   reps: parseInt(reps),
+                //   weight: parseValue(weight),
+                //   exercise: exerciseId,
+                //   date: new Date().toISOString(),
+                // });
+
+                addLog({
+                  userId: userId,
+                  set_nr: setNr,
+                  reps: parseInt(reps),
+                  weight: parseValue(weight),
+                  exercise: exerciseId,
+                  date: new Date().toISOString(),
+                });
+              }}
+            >
+              <Feather name={currentLog ? "refresh-cw" : "check"} size={10} color="gray" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    </>
+  );
+}
+
+function ExercisesMissing({
+  templateExercises,
+  serverExercises,
+}: {
+  templateExercises: any[];
+  serverExercises: any[];
+}) {
+  const { mutate: createMissingExercises } = useCreateMissingExercises();
+
+  return (
+    <View className="flex-1 justify-center bg-zinc-800 p-16">
+      <Text className="mb-3 text-center text-lg font-bold text-white">Some exercises are missing</Text>
+
+      <View className="mb-6">
+        {templateExercises
+          .filter((t) => !serverExercises.find((s) => s.name === t.name))
+          .map((t) => (
+            <Text key={t.name} className="text-sm text-white text-center">
+              {t.name}
+            </Text>
+          ))}
+      </View>
+
+      <Button
+        onPress={() => {
+          createMissingExercises({
+            templateExercises,
+            serverExercises,
+          });
+        }}
+      >
+        <Feather name="plus" size={20} color="gray" />
+        <Text className="text-white">Add Exercises</Text>
+      </Button>
+    </View>
+  );
+}
+
+function parseValue(value: string) {
+  if (value.includes(",")) {
+    const clean = value.replace(",", ".");
+
+    return parseFloat(clean);
+  } else if (value.includes(".")) {
+    return parseFloat(value);
+  }
+
+  return parseInt(value);
 }

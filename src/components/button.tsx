@@ -1,11 +1,15 @@
+import clsx from "clsx";
 import React from "react";
 import { TouchableOpacity } from "react-native";
 
-export function Button({ children, onPress }: any) {
+export function Button({ children, className, ...props }: TouchableOpacity["props"]) {
   return (
     <TouchableOpacity
-      onPress={onPress}
-      className="bg-zinc-900 active:bg-black text-white font-bold p-3 rounded-lg items-center justify-center flex-row space-x-1.5"
+      {...props}
+      className={clsx(
+        "bg-zinc-900 active:bg-black text-white font-bold p-2 rounded-lg items-center justify-center flex-row space-x-1.5",
+        className
+      )}
     >
       {children}
     </TouchableOpacity>
