@@ -1,5 +1,4 @@
 import Feather from "@expo/vector-icons/Feather";
-import BottomSheet, { BottomSheetBackdrop } from "@gorhom/bottom-sheet";
 import clsx from "clsx";
 import { useKeepAwake } from "expo-keep-awake";
 import React, { useState } from "react";
@@ -9,29 +8,7 @@ import { useCurrentWorkout, useCurrentWorkoutLogs, useWorkoutActions } from "../
 import { useCreateMissingExercises, useExercises, useLogs, usePreviousWorkout } from "../lib/api";
 import workouts, { Template } from "../lib/data";
 
-export function WorkoutSheet() {
-  const currentWorkout = useCurrentWorkout();
-
-  if (!currentWorkout) return null;
-
-  return (
-    <BottomSheet
-      index={1}
-      snapPoints={[80, "98%"]}
-      backgroundStyle={{
-        backgroundColor: "black",
-      }}
-      handleIndicatorStyle={{
-        backgroundColor: "rgb(161 161 170)",
-      }}
-      backdropComponent={(props) => <BottomSheetBackdrop {...props} appearsOnIndex={1} />}
-    >
-      <WorkoutScreen currentWorkout={currentWorkout} />
-    </BottomSheet>
-  );
-}
-
-export function WorkoutPage() {
+export function WorkoutScreenWrapper() {
   const currentWorkout = useCurrentWorkout();
 
   if (!currentWorkout) return null;
@@ -39,11 +16,7 @@ export function WorkoutPage() {
   return <WorkoutScreen currentWorkout={currentWorkout} />;
 }
 
-export function WorkoutScreen({
-  currentWorkout,
-}: {
-  currentWorkout: Exclude<ReturnType<typeof useCurrentWorkout>, null>;
-}) {
+function WorkoutScreen({ currentWorkout }: { currentWorkout: Exclude<ReturnType<typeof useCurrentWorkout>, null> }) {
   useKeepAwake();
 
   const { data: exercises } = useExercises();
@@ -87,52 +60,56 @@ export function WorkoutScreen({
 
   return (
     <>
-      <View className="p-4 pt-0 border-b border-zinc-800">
-        <Text className="text-2xl font-bold text-white">{currentWorkout.name}</Text>
+      <View className="px-4 py-2 pt-0 border-b border-zinc-800">
+        <Text className="text-xl font-bold text-white">{currentWorkout.name}</Text>
       </View>
       <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
-        <View className="p-4">
+        <View>
           {templateWithExercises?.exercises.map((exercise) => {
             return <Exercise currentWorkout={currentWorkout} exercise={exercise} key={exercise.id} />;
           })}
         </View>
 
-        <View className="gap-y-4 p-4">
-          <NButton
-            onPress={() => {
-              Alert.alert("Are you sure?", "This will cancel the workout", [
-                {
-                  text: "Cancel",
-                  style: "cancel",
-                },
-                {
-                  text: "OK",
-                  onPress: () => {
-                    stop();
+        <View className="space-y-4">
+          <View>
+            <NButton
+              onPress={() => {
+                Alert.alert("Are you sure?", "This will cancel the workout", [
+                  {
+                    text: "Cancel",
+                    style: "cancel",
                   },
-                },
-              ]);
-            }}
-            title="Cancel Workout"
-            color="red"
-          />
-          <NButton
-            onPress={() => {
-              Alert.alert("Are you sure?", "This will finish the workout", [
-                {
-                  text: "Cancel",
-                  style: "cancel",
-                },
-                {
-                  text: "OK",
-                  onPress: () => {
-                    finish();
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      stop();
+                    },
                   },
-                },
-              ]);
-            }}
-            title="Finish Workout"
-          />
+                ]);
+              }}
+              title="Cancel Workout"
+              color="red"
+            />
+          </View>
+          <View>
+            <NButton
+              onPress={() => {
+                Alert.alert("Are you sure?", "This will finish the workout", [
+                  {
+                    text: "Cancel",
+                    style: "cancel",
+                  },
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      finish();
+                    },
+                  },
+                ]);
+              }}
+              title="Finish Workout"
+            />
+          </View>
         </View>
       </ScrollView>
     </>
@@ -149,35 +126,37 @@ function Exercise({
   const allDone = exercise.logs.length >= exercise.sets.length;
 
   return (
-    <View className="mb-2 bg-zinc-900/20 rounded-lg p-2" key={exercise.id}>
-      <View className="flex-row items-center justify-between">
-        <Text className="text-sm font-medium text-white">{exercise.name}</Text>
+    <View className="mb-12" key={exercise.id}>
+      <View className="flex-row items-center px-4 py-2 bg-zinc-900">
+        <Text className="text-sm font-bold text-white">{exercise.name}</Text>
       </View>
 
-      {currentWorkout.users?.map((user, index) => {
-        return (
-          <View className={index === 0 ? "mt-6" : "mt-12 mb-4"} key={user.id}>
-            <UserLogs exercise={exercise} user={user} currentWorkout={currentWorkout} />
-          </View>
-        );
-      })}
+      <View className="px-4 py-2 mt-1">
+        {currentWorkout.users?.map((user, index) => {
+          return (
+            <View className={index === 0 ? "" : "mt-12"} key={user.id}>
+              <UserLogs exercise={exercise} user={user} templateId={currentWorkout.templateId} />
+            </View>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 function UserLogs({
+  templateId,
   exercise,
   user,
-  currentWorkout,
 }: {
+  templateId: string;
   exercise: {
     id: string;
     sets: any[];
   };
   user: any;
-  currentWorkout: Exclude<ReturnType<typeof useCurrentWorkout>, null>;
 }) {
-  const previousWorkout = usePreviousWorkout(user.id);
+  const previousWorkout = usePreviousWorkout(user.id, templateId);
 
   const logs = useCurrentWorkoutLogs(user.id);
 
@@ -187,15 +166,19 @@ function UserLogs({
 
   return (
     <>
-      <View className="flex-row justify-between items-center mt-2 mb-1 border-b border-zinc-800 pb-2">
-        <View className="bg-zinc-700 p-px rounded">
-          <Text className="text-white w-8 text-[10px] text-center font-medium">{user.name}</Text>
+      <View className="flex-row">
+        <View className="bg-zinc-900 px-2 py-px rounded">
+          <Text className="text-white wtext-sm text-center font-medium">{user.name}</Text>
         </View>
-        <Text className="text-white w-8 text-[10px] text-center font-medium">Target</Text>
-        <Text className="text-white w-16 text-[10px] text-center font-medium">Prev</Text>
-        <Text className="text-white w-10 text-[10px] text-center font-medium">KG</Text>
-        <Text className="text-white w-10 text-[10px] text-center font-medium">Reps</Text>
-        <Text className="text-white w-4 text-[10px] text-center font-medium">
+      </View>
+
+      <View className="flex-row justify-between items-center mt-2 mb-1 border-b border-zinc-800 pb-2">
+        <Text className="text-white w-4 text-xs text-center font-bold">#</Text>
+        <Text className="text-white w-10 text-xs text-center font-bold">Target</Text>
+        <Text className="text-white w-16 text-xs text-center font-bold">Prev</Text>
+        <Text className="text-white w-10 text-xs text-center font-bold">KG</Text>
+        <Text className="text-white w-10 text-xs text-center font-bold">Reps</Text>
+        <Text className="text-white w-4 text-xs text-center font-bold">
           <Feather name="check" size={12} />
         </Text>
       </View>
@@ -214,7 +197,6 @@ function UserLogs({
             set={set}
             userId={user.id}
             exerciseId={exercise.id}
-            currentWorkoutId={currentWorkout.templateId}
             currentLog={currentLog}
             previousLog={previousLog}
           />
@@ -231,7 +213,6 @@ function SetDataInput({
   previousLog,
   userId,
   exerciseId,
-  currentWorkoutId,
   setNr,
 }: {
   disabled?: boolean;
@@ -239,7 +220,6 @@ function SetDataInput({
   currentLog?: any;
   previousLog: any;
   exerciseId: string;
-  currentWorkoutId: string;
   userId: string;
   setNr: number;
 }) {
@@ -258,8 +238,8 @@ function SetDataInput({
 
   return (
     <>
-      <View className={clsx("flex-row justify-between mt-2", disabled && "")}>
-        <View className="flex-row items-center justify-center w-8">
+      <View className="flex-row justify-between mt-2">
+        <View className="flex-row items-center justify-center w-4">
           {set.type === "warmup" ? (
             <Feather name="wind" size={10} color="orange" />
           ) : set.type === "dropset" ? (
@@ -269,7 +249,7 @@ function SetDataInput({
           )}
         </View>
 
-        <View className="flex-row items-center justify-center w-8">
+        <View className="flex-row items-center justify-center w-10">
           <Text className="text-xs font-bold text-center text-white">{set.reps}</Text>
         </View>
 
@@ -283,8 +263,8 @@ function SetDataInput({
                 setReps(previousLog.reps.toString());
               }}
             >
-              <Text className="text-xs font-bold text-white">
-                {previousLog.reps}x{previousLog.weight}kg
+              <Text className="text-[10px] font-bold text-white">
+                {previousLog.reps}x{previousLog.weight}KG
               </Text>
             </TouchableOpacity>
           ) : (
@@ -300,7 +280,7 @@ function SetDataInput({
               value={weight}
               onChangeText={limitLength(setWeight)}
               keyboardType="numeric"
-              className="w-10 h-5 text-[10px] font-bold rounded bg-zinc-800 text-center text-white"
+              className="w-10 h-5 text-xs font-bold rounded bg-zinc-800 text-center text-white"
             />
           )}
         </View>
@@ -312,7 +292,7 @@ function SetDataInput({
               value={reps}
               onChangeText={limitLength(setReps)}
               keyboardType="numeric"
-              className="w-10 h-5 text-[10px] font-bold rounded bg-zinc-800  text-center text-white"
+              className="w-10 h-5 text-xs font-bold rounded bg-zinc-800  text-center text-white"
             />
           )}
         </View>
@@ -323,15 +303,6 @@ function SetDataInput({
               className={clsx("w-5 h-5 rounded bg-zinc-800 flex items-center justify-center", disabled && "opacity-50")}
               onPress={() => {
                 if (!weight || !reps) return;
-
-                // console.log("add log", {
-                //   userId: userId,
-                //   set_nr: setNr,
-                //   reps: parseInt(reps),
-                //   weight: parseValue(weight),
-                //   exercise: exerciseId,
-                //   date: new Date().toISOString(),
-                // });
 
                 addLog({
                   userId: userId,

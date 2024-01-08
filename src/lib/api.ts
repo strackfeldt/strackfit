@@ -33,14 +33,14 @@ export function useWorkouts() {
   });
 }
 
-export function usePreviousWorkout(userId: string) {
+export function usePreviousWorkout(userId: string, templateId: string) {
   return useQuery({
-    queryKey: ["previousWorkout", userId],
+    queryKey: ["previousWorkout", { userId, templateId }],
     queryFn: () =>
       pb
         .collection("workouts")
         .getList(1, 1, {
-          filter: `user = "${userId}"`,
+          filter: `user = "${userId}" && template_id = "${templateId}"`,
           sort: "-started_at",
         })
         .then((res) => {

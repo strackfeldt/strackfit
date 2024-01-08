@@ -9,7 +9,7 @@ import { useCurrentUser } from "./lib/api";
 import { HomeScreen } from "./screens/home-screen";
 import { LoginScreen } from "./screens/login-screen";
 import { SettingsScreen } from "./screens/settings-screen";
-import { WorkoutPage } from "./screens/workout-screen";
+import { WorkoutScreenWrapper } from "./screens/workout-screen";
 
 const Tabs = createBottomTabNavigator();
 
@@ -17,7 +17,6 @@ function HomeStack() {
   return (
     <Tabs.Navigator
       screenOptions={{
-        // tabBarShowLabel: false,
         headerShown: false,
       }}
     >
@@ -39,59 +38,6 @@ function HomeStack() {
   );
 }
 
-// function WorkoutStack() {
-//   const { data: currentWorkout, isLoading } = useCurrentWorkout();
-//   const { mutate: cancelWorkout } = useCancelWorkout();
-//   const { mutate: finishWorkout } = useFinishWorkout();
-
-//   if (!currentWorkout || isLoading) return null;
-
-//   return (
-//     <Stack.Navigator>
-//       <Stack.Screen
-//         name={"Workout"}
-//         component={WorkoutScreen}
-//         options={{
-//           headerLeft: () => (
-//             <Button
-//               title="Cancel"
-//               onPress={() => {
-//                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-//                 Alert.alert("Cancel Workout", "Are you sure you want to cancel this workout?", [
-//                   { text: "Cancel", style: "cancel" },
-//                   {
-//                     text: "OK",
-//                     onPress: () => {
-//                       cancelWorkout(currentWorkout?.id);
-//                     },
-//                   },
-//                 ]);
-//               }}
-//               color="red"
-//             />
-//           ),
-//           headerRight: () => (
-//             <Button
-//               title="Finish"
-//               onPress={() => {
-//                 Alert.alert("Finish Workout", "Are you sure you want to finish this workout?", [
-//                   { text: "Cancel", style: "cancel" },
-//                   {
-//                     text: "OK",
-//                     onPress: () => {
-//                       finishWorkout(currentWorkout?.id);
-//                     },
-//                   },
-//                 ]);
-//               }}
-//             />
-//           ),
-//         }}
-//       />
-//     </Stack.Navigator>
-//   );
-// }
-
 export function AuthedRouter() {
   const user = useCurrentUser();
   const scheme = useColorScheme();
@@ -102,7 +48,7 @@ export function AuthedRouter() {
   }
 
   if (currentWorkout) {
-    return <WorkoutPage />;
+    return <WorkoutScreenWrapper />;
   }
 
   return (
