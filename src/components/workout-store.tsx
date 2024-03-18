@@ -1,4 +1,5 @@
-import * as SecureStorage from "expo-secure-store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { pb } from "../lib/pb";
@@ -34,7 +35,6 @@ const useWorkoutStore = create(
       }) => void;
       stop: () => void;
       finish: () => void;
-
       addLog: (log: any) => void;
     };
   }>(
@@ -43,12 +43,13 @@ const useWorkoutStore = create(
 
       actions: {
         start: (data) =>
-          set({
+          set((state) => ({
+            ...state,
             startedAt: new Date(),
             name: data.name,
             templateId: data.templateId,
             users: data.users,
-          }),
+          })),
 
         stop: () => set(initialState),
 
@@ -105,26 +106,35 @@ const useWorkoutStore = create(
 
         addLog: (log) =>
           set((state) => {
+            // console.log({ log });
+
             const existingLog = state.logs.find(
-              (l) => l.userId === log.userId && l.exerciseId === log.exerciseId && l.set_nr === log.set_nr
+              (l) => l.userId === log.userId && l.exercise === log.exercise && l.set_nr === log.set_nr
             );
 
             if (existingLog) {
+              // console.log({ existingLog });
+
+              const logs = state.logs.map((l) => {
+                if (l.id === existingLog.id) {
+                  return log;
+                }
+
+                return l;
+              });
+
+              // console.log({ logs });
               return {
                 ...state,
-                logs: state.logs.map((l) => {
-                  if (l.id === existingLog.id) {
-                    return log;
-                  }
-
-                  return l;
-                }),
+                logs,
               };
             }
 
             log.id = "temp_" + state.logs.length + 1;
 
             const logs = [...state.logs, log];
+
+            // console.log({ logs });
 
             return {
               ...state,
@@ -135,20 +145,8 @@ const useWorkoutStore = create(
     }),
     {
       name: "workout",
-      version: 1,
-      storage: createJSONStorage(() => ({
-        getItem: async (key) => {
-          const value = await SecureStorage.getItemAsync(key);
-
-          return value ? JSON.parse(value) : null;
-        },
-        setItem: async (key, value) => {
-          await SecureStorage.setItemAsync(key, JSON.stringify(value));
-        },
-        removeItem: async (key) => {
-          await SecureStorage.deleteItemAsync(key);
-        },
-      })),
+      version: 2,
+      storage: createJSONStorage(() => AsyncStorage),
       merge: (persistedState, currentState) => {
         return {
           ...(persistedState as any),

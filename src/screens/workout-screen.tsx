@@ -175,9 +175,9 @@ function UserLogs({
       <View className="flex-row justify-between items-center mt-2 mb-1 border-b border-zinc-800 pb-2">
         <Text className="text-white w-4 text-xs text-center font-bold">#</Text>
         <Text className="text-white w-10 text-xs text-center font-bold">Target</Text>
-        <Text className="text-white w-16 text-xs text-center font-bold">Prev</Text>
-        <Text className="text-white w-10 text-xs text-center font-bold">KG</Text>
-        <Text className="text-white w-10 text-xs text-center font-bold">Reps</Text>
+        <Text className="text-white w-20 text-xs text-center font-bold">Prev</Text>
+        <Text className="text-white w-8 text-xs text-center font-bold">KG</Text>
+        <Text className="text-white w-8 text-xs text-center font-bold">Reps</Text>
         <Text className="text-white w-4 text-xs text-center font-bold">
           <Feather name="check" size={12} />
         </Text>
@@ -193,7 +193,7 @@ function UserLogs({
           <SetDataInput
             setNr={index + 1}
             disabled={disabled}
-            key={index}
+            key={exercise.id + "_" + index}
             set={set}
             userId={user.id}
             exerciseId={exercise.id}
@@ -241,19 +241,19 @@ function SetDataInput({
       <View className="flex-row justify-between mt-2">
         <View className="flex-row items-center justify-center w-4">
           {set.type === "warmup" ? (
-            <Feather name="wind" size={10} color="orange" />
+            <Feather name="wind" size={12} color="orange" />
           ) : set.type === "dropset" ? (
-            <Feather name="corner-down-left" size={10} color="indigo" />
+            <Feather name="corner-down-left" size={12} color="indigo" />
           ) : (
-            <Text className="text-xs font-bold text-white">{setNr}</Text>
+            <Text className="text-sm font-bold text-white">{setNr}</Text>
           )}
         </View>
 
-        <View className="flex-row items-center justify-center w-10">
+        <View className="flex-row items-center justify-center w-12">
           <Text className="text-xs font-bold text-center text-white">{set.reps}</Text>
         </View>
 
-        <View className="flex-row justify-center items-center w-16">
+        <View className="flex-row justify-center h-full items-center w-20">
           {previousLog ? (
             <TouchableOpacity
               activeOpacity={0.9}
@@ -263,7 +263,7 @@ function SetDataInput({
                 setReps(previousLog.reps.toString());
               }}
             >
-              <Text className="text-[10px] font-bold text-white">
+              <Text className="text-xs font-bold text-white">
                 {previousLog.reps}x{previousLog.weight}KG
               </Text>
             </TouchableOpacity>
@@ -272,7 +272,7 @@ function SetDataInput({
           )}
         </View>
 
-        <View className="flex-row items-center justify-center w-10">
+        <View className="flex-row items-center justify-center w-8">
           {disabled ? (
             <Text className="text-xs font-bold text-center text-white">-</Text>
           ) : (
@@ -280,11 +280,11 @@ function SetDataInput({
               value={weight}
               onChangeText={limitLength(setWeight)}
               keyboardType="numeric"
-              className="w-10 h-5 text-xs font-bold rounded bg-zinc-800 text-center text-white"
+              className="w-10 h-6 text-xs font-bold rounded bg-zinc-800 text-center text-white"
             />
           )}
         </View>
-        <View className="flex-row items-center justify-center w-10">
+        <View className="flex-row items-center justify-center w-8">
           {disabled ? (
             <Text className="text-xs font-bold text-center text-white">-</Text>
           ) : (
@@ -292,7 +292,7 @@ function SetDataInput({
               value={reps}
               onChangeText={limitLength(setReps)}
               keyboardType="numeric"
-              className="w-10 h-5 text-xs font-bold rounded bg-zinc-800  text-center text-white"
+              className="w-10 h-6 text-xs font-bold rounded bg-zinc-800  text-center text-white"
             />
           )}
         </View>
@@ -300,7 +300,7 @@ function SetDataInput({
         <View className="flex-row items-center justify-center w-4">
           {(!currentLog || currentLog.weight !== parseValue(weight) || currentLog.reps !== parseInt(reps)) && (
             <TouchableOpacity
-              className={clsx("w-5 h-5 rounded bg-zinc-800 flex items-center justify-center", disabled && "opacity-50")}
+              className={clsx("w-6 h-6 rounded bg-zinc-800 flex items-center justify-center", disabled && "opacity-50")}
               onPress={() => {
                 if (!weight || !reps) return;
 
