@@ -6,59 +6,59 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthedRouter } from "./router";
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: false,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
+    handleNotification: async () => ({
+        shouldShowAlert: false,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+    }),
 });
 
 function onAppStateChange(status: AppStateStatus) {
-  focusManager.setFocused(status === "active");
+    focusManager.setFocused(status === "active");
 }
 
 const qc = new QueryClient();
 
 export async function registerForPushNotificationsAsync() {
-  let token;
+    let token;
 
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
 
-  let finalStatus = existingStatus;
-  if (existingStatus !== "granted") {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
+    let finalStatus = existingStatus;
+    if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+    }
 
-  if (finalStatus !== "granted") {
-    return;
-  }
+    if (finalStatus !== "granted") {
+        return;
+    }
 
-  token = (await Notifications.getExpoPushTokenAsync()).data;
+    token = (await Notifications.getExpoPushTokenAsync()).data;
 
-  return token;
+    return token;
 }
 
 export default function App() {
-  useEffect(() => {
-    registerForPushNotificationsAsync();
-  }, []);
+    useEffect(() => {
+        registerForPushNotificationsAsync();
+    }, []);
 
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", onAppStateChange);
+    useEffect(() => {
+        const subscription = AppState.addEventListener("change", onAppStateChange);
 
-    return () => subscription.remove();
-  }, []);
+        return () => subscription.remove();
+    }, []);
 
-  return (
-    <QueryClientProvider client={qc}>
-      <SafeAreaView className="flex-1 bg-black">
-        <GestureHandlerRootView className="flex-1">
-          <KeyboardAvoidingView className="flex-1 bg-black" behavior="padding" enabled>
-            <AuthedRouter />
-          </KeyboardAvoidingView>
-        </GestureHandlerRootView>
-      </SafeAreaView>
-    </QueryClientProvider>
-  );
+    return (
+        <QueryClientProvider client={qc}>
+            <SafeAreaView className="flex-1 bg-black">
+                <GestureHandlerRootView className="flex-1">
+                    <KeyboardAvoidingView className="flex-1 bg-black" behavior="padding" enabled>
+                        <AuthedRouter />
+                    </KeyboardAvoidingView>
+                </GestureHandlerRootView>
+            </SafeAreaView>
+        </QueryClientProvider>
+    );
 }
