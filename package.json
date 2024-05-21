@@ -36,7 +36,7 @@
     "@expo/vector-icons": "^14.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.9",
+    "@babel/core": "^7.24.0",
     "@types/react": "~18.2.79",
     "tailwindcss": "^3.2.6",
     "typescript": "~5.3.3"

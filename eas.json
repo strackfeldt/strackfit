@@ -7,22 +7,22 @@
             "developmentClient": true,
             "distribution": "internal",
             "ios": {
-                "resourceClass": "m1-medium"
+                "resourceClass": "m-medium"
             }
         },
         "preview": {
             "distribution": "internal",
             "channel": "preview",
             "ios": {
-                "resourceClass": "m1-medium"
+                "resourceClass": "m-medium"
             },
             "env": {
-                "EXPO_PUBLIC_BACKEND_URL": "https://strackfit.timostrackfeldt.com/"
+                "EXPO_PUBLIC_BACKEND_URL": "https://strackfit-pb.tstr.app/"
             }
         },
         "production": {
             "ios": {
-                "resourceClass": "m1-medium"
+                "resourceClass": "m-medium"
             }
         }
     },
