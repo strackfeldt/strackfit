@@ -1,10 +1,11 @@
 import Feather from "@expo/vector-icons/Feather";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { Button } from "../components/button";
 import { useLogin } from "../lib/api";
 
-export function LoginScreen() {
+export default function LoginScreen() {
     const { mutate: login } = useLogin();
 
     const [emailOrUsername, setEmailOrUsername] = useState("");
@@ -42,7 +43,10 @@ export function LoginScreen() {
                 <View className="mt-4 w-full">
                     <Button
                         onPress={() => {
-                            login({ username: emailOrUsername, password });
+                            login(
+                                { username: emailOrUsername, password },
+                                { onSuccess: () => router.replace("/") }
+                            );
                         }}
                     >
                         <Feather name="log-in" size={20} color="white" />

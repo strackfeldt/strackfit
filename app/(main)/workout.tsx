@@ -1,6 +1,7 @@
 import Feather from "@expo/vector-icons/Feather";
 import clsx from "clsx";
 import { useKeepAwake } from "expo-keep-awake";
+import { router, useNavigation } from "expo-router";
 import React, { useState } from "react";
 import {
     Alert,
@@ -11,16 +12,21 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { Button } from "../components/button";
+import { Button } from "../../components/button";
+import {
+    useCreateMissingExercises,
+    useExercises,
+    useLogs,
+    usePreviousWorkout,
+} from "../../lib/api";
+import workouts, { Template } from "../../lib/data";
 import {
     useCurrentWorkout,
     useCurrentWorkoutLogs,
     useWorkoutActions,
-} from "../components/workout-store";
-import { useCreateMissingExercises, useExercises, useLogs, usePreviousWorkout } from "../lib/api";
-import workouts, { Template } from "../lib/data";
+} from "../../store/workout-store";
 
-export function WorkoutScreenWrapper() {
+export default function WorkoutScreenWrapper() {
     const currentWorkout = useCurrentWorkout();
 
     if (!currentWorkout) return null;
@@ -38,6 +44,7 @@ function WorkoutScreen({
     const { data: exercises } = useExercises();
 
     const { stop, finish } = useWorkoutActions();
+    const { navigate } = useNavigation();
 
     const template = workouts.find((w) => w.id === currentWorkout?.templateId);
 
@@ -113,6 +120,7 @@ function WorkoutScreen({
                                         text: "OK",
                                         onPress: () => {
                                             stop();
+                                            router.replace("/");
                                         },
                                     },
                                 ]);
@@ -133,6 +141,7 @@ function WorkoutScreen({
                                         text: "OK",
                                         onPress: () => {
                                             finish();
+                                            router.replace("/");
                                         },
                                     },
                                 ]);

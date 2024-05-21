@@ -1,10 +1,10 @@
 import * as Updates from "expo-updates";
 import React from "react";
 import { Alert, Text, View } from "react-native";
-import { Button } from "../components/button";
-import { useLogout } from "../lib/api";
+import { Button } from "../../../components/button";
+import { useLogout } from "../../../lib/api";
 
-export function SettingsScreen() {
+export default function SettingsScreen() {
     const logout = useLogout();
 
     return (
